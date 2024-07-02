@@ -1,31 +1,45 @@
-use actix_web::{web, App, HttpServer};
-use std::sync::Mutex;
+extern crate actix_web;
+extern crate diesel;
 
-struct AppStateWithCounter {
-    counter: Mutex<i32>, // <- Mutex is necessary to mutate safely across threads
-}
+use std::{io, env};
 
-async fn index(data: web::Data<AppStateWithCounter>) -> String {
-    let mut counter = data.counter.lock().unwrap(); // <- get counter's MutexGuard
-    *counter += 1; // <- access counter inside MutexGuard
+use actix_web::{HttpServer, App, middleware};
+use diesel::r2d2::ConnectionManager;
+use diesel::PgConnection;
+use r2d2::{Pool, PooledConnection};
 
-    format!("Request number: {counter}") // <- response with count
-}
+mod user;
+mod constants;
+mod response;
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    // Note: web::Data created _outside_ HttpServer::new closure
-    let counter = web::Data::new(AppStateWithCounter {
-        counter: Mutex::new(0),
-    });
+pub type DBPool = Pool<ConnectionManager<PgConnection>>;
+pub type DBPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
+
+#[actix_rt::main]
+async fn main() -> io::Result<()> {
+    env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
+    env_logger::init();
+
+    dotenvy::dotenv();
+
+    let database_url = env::var("DATABASE_URL").expect("DATABASE_URL");
+    let manager = ConnectionManager::<PgConnection>::new(database_url);
+    let pool = r2d2::Pool::builder()
+        .build(manager)
+        .expect("Failed to create pool");
 
     HttpServer::new(move || {
-        // move counter into the closure
         App::new()
-            .app_data(counter.clone()) // <- register the created data
-            .route("/", web::get().to(index))
+            .data(pool.clone())
+            .wrap(middleware::Logger::default())
+            .service(user::create)
+            .service(user::get)
+            .service(user::update)
+            .service(user::delete)
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind("0.0.0.0:8080")?
     .run()
-    .await
+    .await;
+
+    Ok(())
 }
