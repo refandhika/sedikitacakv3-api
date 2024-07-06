@@ -3,16 +3,20 @@ extern crate diesel;
 
 use std::{io, env};
 
-use actix_web::{HttpServer, App, middleware};
+use actix_web::{HttpServer, App, middleware, web};
 use diesel::r2d2::ConnectionManager;
 use diesel::PgConnection;
 use r2d2::{Pool, PooledConnection};
+
+use crate::auth::AuthMiddleware;
 
 mod constants;
 mod response;
 mod models;
 mod schema;
+mod auth;
 
+mod login;
 mod user;
 
 pub type DBPool = Pool<ConnectionManager<PgConnection>>;
@@ -35,11 +39,21 @@ async fn main() -> io::Result<()> {
         App::new()
             .data(pool.clone())
             .wrap(middleware::Logger::default())
-            .service(user::create)
-            .service(user::get)
-            .service(user::update)
-            .service(user::delete)
-            .service(user::restore)
+            .service(
+                web::scope("/pub")
+                .service(user::get)
+                .service(login::login)
+            )
+            .service(
+                web::scope("/pro")
+                .wrap(AuthMiddleware)
+                //.service(user::create)
+                .service(user::update)
+                .service(user::delete)
+                .service(user::restore)
+                //.service(login::logout)
+            )
+            .app_data(web::Data::new(pool.clone()))
     })
     .bind("0.0.0.0:8080")?
     .run()
