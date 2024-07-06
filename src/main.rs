@@ -8,9 +8,12 @@ use diesel::r2d2::ConnectionManager;
 use diesel::PgConnection;
 use r2d2::{Pool, PooledConnection};
 
-mod user;
 mod constants;
 mod response;
+mod models;
+mod schema;
+
+mod user;
 
 pub type DBPool = Pool<ConnectionManager<PgConnection>>;
 pub type DBPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
@@ -20,7 +23,7 @@ async fn main() -> io::Result<()> {
     env::set_var("RUST_LOG", "actix_web=debug,actix_server=info");
     env_logger::init();
 
-    dotenvy::dotenv();
+    let _ = dotenvy::dotenv();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
@@ -28,7 +31,7 @@ async fn main() -> io::Result<()> {
         .build(manager)
         .expect("Failed to create pool");
 
-    HttpServer::new(move || {
+    let _ = HttpServer::new(move || {
         App::new()
             .data(pool.clone())
             .wrap(middleware::Logger::default())
