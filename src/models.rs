@@ -3,11 +3,11 @@ use chrono::{Utc, NaiveDateTime, NaiveDate, TimeZone};
 use serde::{Serialize};
 use uuid::Uuid;
 
-use crate::constants::{USER_PHONE_NOTFOUND, USER_BIRTH_NOTFOUND, USER_LINKEDIN_NOTFOUND, USER_GITHUB_NOTFOUND, USER_DELETED_AT_NOTFOUND};
+use crate::constants::USER_BIRTH_NOTFOUND;
 
 use crate::schema::users;
 
-use crate::response::UserResponse;
+use crate::response::UserResponseWithoutPass;
 
 // User Database Struct
 
@@ -29,19 +29,18 @@ pub struct UserDB {
 }
 
 impl UserDB {
-    pub fn to_create(&self) -> UserResponse {
-        UserResponse {
+    pub fn get_by_id(&self) -> UserResponseWithoutPass {
+        UserResponseWithoutPass {
             id: self.id.to_string(),
             created_at: Utc.from_utc_datetime(&self.created_at),
             updated_at: Utc.from_utc_datetime(&self.updated_at),
-            deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)).expect(USER_DELETED_AT_NOTFOUND),
+            deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
             name: self.name.clone(),
             email: self.email.clone(),
-            phone: self.phone.clone().expect(USER_PHONE_NOTFOUND),
-            birth: self.birth.map(|date| Utc.from_utc_date(&date).and_hms_opt(0, 0, 0)).expect(USER_BIRTH_NOTFOUND).expect(USER_BIRTH_NOTFOUND),
-            linkedin: self.linkedin.clone().expect(USER_LINKEDIN_NOTFOUND),
-            github: self.github.clone().expect(USER_GITHUB_NOTFOUND),
-            password: self.password.clone()
+            phone: self.phone.clone(),
+            birth: self.birth.map(|date| Utc.from_utc_date(&date).and_hms_opt(0, 0, 0)).expect(USER_BIRTH_NOTFOUND),
+            linkedin: self.linkedin.clone(),
+            github: self.github.clone()
         }
     }
 }

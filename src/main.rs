@@ -39,6 +39,7 @@ async fn main() -> io::Result<()> {
             .service(user::get)
             .service(user::update)
             .service(user::delete)
+            .service(user::restore)
     })
     .bind("0.0.0.0:8080")?
     .run()
