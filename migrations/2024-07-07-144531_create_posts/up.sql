@@ -1,0 +1,15 @@
+CREATE TABLE posts (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    subtitle VARCHAR(255),
+    slug VARCHAR(255) NOT NULL UNIQUE,
+    content TEXT NOT NULL,
+    category VARCHAR(100),
+    tags TEXT,
+    author_id UUID NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    deleted_at TIMESTAMP,
+    published BOOLEAN DEFAULT FALSE NOT NULL,
+    FOREIGN KEY (author_id) REFERENCES users(id)
+);

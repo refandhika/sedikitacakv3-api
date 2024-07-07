@@ -46,3 +46,19 @@ pub struct UserResponseWithoutPass {
     pub linkedin: Option<String>,
     pub github: Option<String>,
 }
+
+#[derive(Debug, Serialize)]
+pub struct PostResponse {
+    pub id: i32,
+    pub title: String,
+    pub subtitle: Option<String>,
+    pub slug: String,
+    pub content: String,
+    pub category: Option<String>,
+    pub tags: Option<String>,
+    pub author_id: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub published: bool
+}

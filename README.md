@@ -34,17 +34,29 @@ Notable library used:
 
 `/posts`
 - GET: Get all post limited by 10 per page
+    - Have `page` parameter
+    - Have `cat` parameter
 
 `/post`
-- POST: Save a new post (Authorized)
+- POST: Save a new post (Authorized) - **Done**
 
 `/post/:id`
-- GET: Get a post by slug
-- UPDATE: Update a post by slug  (Authorized)
-- DELETE: Soft delete a post by slug  (Authorized)
+- GET: Get a post by slug - **Done**
+- UPDATE: Update a post by slug  (Authorized) - **Done**
+- DELETE: Soft delete a post by slug  (Authorized) - **Done**
 
 `/post/:id/restore`
-- POST: Restore a post by slug (Authorized)
+- POST: Restore a post by slug (Authorized) - **Done**
+
+`/post-category`
+- POST: Save new post category (Authorized)
+
+`/post-category/:id`
+- UPDATE: Update a post category by ID  (Authorized)
+- DELETE: Soft delete a post category by ID  (Authorized)
+
+`/post-category/:id/restore`
+- POST: Restore a post category by slug (Authorized)
 
 `/projects`
 - GET: Get all project lists by 12 per page
@@ -64,7 +76,7 @@ Notable library used:
 - GET: Get all hobbies lists
 
 `/hobby`
-- POST: Save new hobby  Authorized)
+- POST: Save new hobby (Authorized)
 
 `/hobby/:id`
 - GET: Get a hobby by ID
@@ -74,9 +86,6 @@ Notable library used:
 `/hobby/:id/restore`
 - POST: Restore a hobby by slug (Authorized)
 
-`/contact`
-- POST: Send email from a form
-
 `/setting`
 - POST: Set a global param  (Authorized)
 
@@ -84,3 +93,6 @@ Notable library used:
 - GET: Get a global param
 - UPDATE: Update a global param  (Authorized)
 - DELETE: Delete a global param  (Authorized)
+
+`/contact`
+- POST: Send email from a form
