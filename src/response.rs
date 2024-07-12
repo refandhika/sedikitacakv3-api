@@ -54,11 +54,23 @@ pub struct PostResponse {
     pub subtitle: Option<String>,
     pub slug: String,
     pub content: String,
-    pub category: Option<String>,
     pub tags: Option<String>,
     pub author_id: String,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
-    pub published: bool
+    pub published: bool,
+    pub category_id: Option<i32>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PostCatResponse {
+    pub id: i32,
+    pub name: String,
+    pub slug: String,
+    pub description: Option<String>,
+    pub published: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>
 }

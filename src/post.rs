@@ -17,7 +17,7 @@ pub struct PostRequest {
     pub subtitle: Option<String>,
     pub slug: String,
     pub content: String,
-    pub category: String,
+    pub category_id: Option<i32>,
     pub tags: Option<String>,
     pub author_id: String,
     pub published: bool
@@ -33,7 +33,7 @@ impl PostRequest {
             subtitle: Some(self.subtitle.clone().unwrap_or("".to_string())),
             slug: self.slug.clone(),
             content: self.content.clone(),
-            category: Some(self.category.clone()),
+            category_id: Some(self.category_id.clone()),
             tags: Some(self.tags.clone().unwrap_or("".to_string())),
             author_id,
             created_at: Utc::now().naive_utc(),
@@ -54,7 +54,7 @@ fn create_post(post: PostDB, conn: &mut DBPooledConnection) -> Result<PostDB, Er
             subtitle.eq(&post.subtitle),
             slug.eq(&post.slug),
             content.eq(&post.content),
-            category.eq(&post.category),
+            category_id.eq(&post.category_id),
             tags.eq(&post.tags),
             author_id.eq(&post.author_id),
             created_at.eq(post.created_at),
@@ -73,7 +73,7 @@ fn update_post(post: PostDB, post_id: i32, conn: &mut DBPooledConnection) -> Res
             subtitle.eq(post.subtitle),
             slug.eq(post.slug),
             content.eq(post.content),
-            category.eq(post.category),
+            category_id.eq(post.category_id),
             tags.eq(post.tags),
             author_id.eq(post.author_id),
             updated_at.eq(Utc::now().naive_utc()),
@@ -156,10 +156,10 @@ pub async fn delete(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespon
     {
         Ok(_) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "User successfully deleted"})),
+            .json(serde_json::json!({"message": "Post successfully deleted"})),
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Failed to delete user"})),
+            .json(serde_json::json!({"message": "Failed to delete post"})),
     }
 }
 
@@ -176,9 +176,9 @@ pub async fn restore(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespo
     {
         Ok(_) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "User successfully restored"})),
+            .json(serde_json::json!({"message": "Post successfully restored"})),
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Failed to restore user"})),
+            .json(serde_json::json!({"message": "Failed to restore post"})),
     }
 }

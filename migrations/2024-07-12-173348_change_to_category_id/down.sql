@@ -1,0 +1,5 @@
+ALTER TABLE posts ADD COLUMN category VARCHAR(100);
+
+ALTER TABLE posts DROP CONSTRAINT fk_category;
+
+ALTER TABLE posts DROP COLUMN category_id;

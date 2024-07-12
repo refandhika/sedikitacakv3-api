@@ -49,14 +49,14 @@ Notable library used:
 - POST: Restore a post by slug (Authorized) - **Done**
 
 `/post-category`
-- POST: Save new post category (Authorized)
+- POST: Save new post category (Authorized) - **Done**
 
 `/post-category/:id`
-- UPDATE: Update a post category by ID  (Authorized)
-- DELETE: Soft delete a post category by ID  (Authorized)
+- UPDATE: Update a post category by ID  (Authorized) - **Done**
+- DELETE: Soft delete a post category by ID  (Authorized) - **Done**
 
 `/post-category/:id/restore`
-- POST: Restore a post category by slug (Authorized)
+- POST: Restore a post category by slug (Authorized) - **Done**
 
 `/projects`
 - GET: Get all project lists by 12 per page

@@ -1,6 +1,21 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    post_categories (id) {
+        id -> Int4,
+        #[max_length = 255]
+        name -> Varchar,
+        #[max_length = 255]
+        slug -> Varchar,
+        description -> Nullable<Text>,
+        published -> Bool,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     posts (id) {
         id -> Int4,
         #[max_length = 255]
@@ -10,14 +25,13 @@ diesel::table! {
         #[max_length = 255]
         slug -> Varchar,
         content -> Text,
-        #[max_length = 100]
-        category -> Nullable<Varchar>,
         tags -> Nullable<Text>,
         author_id -> Uuid,
         created_at -> Timestamp,
         updated_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
         published -> Bool,
+        category_id -> Nullable<Int4>,
     }
 }
 
@@ -43,9 +57,11 @@ diesel::table! {
     }
 }
 
+diesel::joinable!(posts -> post_categories (category_id));
 diesel::joinable!(posts -> users (author_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    post_categories,
     posts,
     users,
 );

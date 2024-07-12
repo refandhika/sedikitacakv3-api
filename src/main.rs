@@ -19,6 +19,7 @@ mod auth;
 mod login;
 mod user;
 mod post;
+mod postcat;
 
 pub type DBPool = Pool<ConnectionManager<PgConnection>>;
 pub type DBPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
@@ -45,6 +46,7 @@ async fn main() -> io::Result<()> {
                 .service(login::login)
                 .service(user::get)
                 .service(post::get)
+                .service(postcat::get)
             )
             .service(
                 web::scope("/pro")
@@ -57,6 +59,10 @@ async fn main() -> io::Result<()> {
                 .service(post::update)
                 .service(post::delete)
                 .service(post::restore)
+                .service(postcat::create)
+                .service(postcat::update)
+                .service(postcat::delete)
+                .service(postcat::restore)
             )
             .app_data(web::Data::new(pool.clone()))
     })
