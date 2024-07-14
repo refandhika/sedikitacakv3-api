@@ -33,7 +33,7 @@ impl PostRequest {
             subtitle: Some(self.subtitle.clone().unwrap_or("".to_string())),
             slug: self.slug.clone(),
             content: self.content.clone(),
-            category_id: Some(self.category_id.clone()),
+            category_id: self.category_id.clone(),
             tags: Some(self.tags.clone().unwrap_or("".to_string())),
             author_id,
             created_at: Utc::now().naive_utc(),
@@ -50,13 +50,13 @@ fn create_post(post: PostDB, conn: &mut DBPooledConnection) -> Result<PostDB, Er
     use crate::schema::posts::dsl::*;
     diesel::insert_into(posts)
         .values((
-            title.eq(&post.title),
-            subtitle.eq(&post.subtitle),
-            slug.eq(&post.slug),
-            content.eq(&post.content),
-            category_id.eq(&post.category_id),
-            tags.eq(&post.tags),
-            author_id.eq(&post.author_id),
+            title.eq(post.title),
+            subtitle.eq(post.subtitle),
+            slug.eq(post.slug),
+            content.eq(post.content),
+            category_id.eq(post.category_id),
+            tags.eq(post.tags),
+            author_id.eq(post.author_id),
             created_at.eq(post.created_at),
             updated_at.eq(post.updated_at),
             deleted_at.eq(post.deleted_at),
@@ -65,9 +65,9 @@ fn create_post(post: PostDB, conn: &mut DBPooledConnection) -> Result<PostDB, Er
         .get_result(conn)
 }
 
-fn update_post(post: PostDB, post_id: i32, conn: &mut DBPooledConnection) -> Result<PostDB, Error> {
+fn update_post(post: PostDB, post_slug: String, conn: &mut DBPooledConnection) -> Result<PostDB, Error> {
     use crate::schema::posts::dsl::*;
-    diesel::update(posts.filter(id.eq(post_id)))
+    diesel::update(posts.filter(slug.eq(post_slug)))
         .set((
             title.eq(post.title),
             subtitle.eq(post.subtitle),
@@ -85,8 +85,8 @@ fn update_post(post: PostDB, post_id: i32, conn: &mut DBPooledConnection) -> Res
 // Routing
 
 #[post("/post")]
-pub async fn create(user_req: web::Json<PostRequest>, pool: web::Data<DBPool>) -> HttpResponse {
-    match user_req.to_post_db() {
+pub async fn create(post_req: web::Json<PostRequest>, pool: web::Data<DBPool>) -> HttpResponse {
+    match post_req.to_post_db() {
         Ok(post_db) => {
             let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
             match create_post(post_db, &mut conn) {
@@ -104,13 +104,13 @@ pub async fn create(user_req: web::Json<PostRequest>, pool: web::Data<DBPool>) -
     }
 }
 
-#[post("/post/{id}")]
-pub async fn update(path: web::Path<i32>, user_req: web::Json<PostRequest>, pool: web::Data<DBPool>) -> HttpResponse {
-    let post_id = path.into_inner();
-    match user_req.to_post_db() {
+#[post("/post/{slug}")]
+pub async fn update(path: web::Path<String>, post_req: web::Json<PostRequest>, pool: web::Data<DBPool>) -> HttpResponse {
+    let post_slug = path.into_inner();
+    match post_req.to_post_db() {
         Ok(post_db) => {
             let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-            match update_post(post_db, post_id, &mut conn) {
+            match update_post(post_db, post_slug, &mut conn) {
                 Ok(updated_post) => HttpResponse::Created()
                     .content_type(APPLICATION_JSON)
                     .json(updated_post),
@@ -125,14 +125,14 @@ pub async fn update(path: web::Path<i32>, user_req: web::Json<PostRequest>, pool
     }
 }
 
-#[get("/post/{id}")]
-pub async fn get(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpResponse {
-    let post_id = path.into_inner();
+#[get("/post/{slug}")]
+pub async fn get(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpResponse {
+    let post_slug = path.into_inner();
 
     use crate::schema::posts::dsl::*;
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match posts.filter(id.eq(post_id)).first::<PostDB>(&mut conn) {
+    match posts.filter(slug.eq(post_slug)).first::<PostDB>(&mut conn) {
         Ok(post) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(post.get_by_id()),
@@ -142,15 +142,15 @@ pub async fn get(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpResponse 
     }
 }
 
-#[delete("/post/{id}")]
-pub async fn delete(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpResponse {
-    let post_id = path.into_inner();
+#[delete("/post/{slug}")]
+pub async fn delete(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpResponse {
+    let post_slug = path.into_inner();
     let current_time = Utc::now().naive_utc();
 
     use crate::schema::posts::dsl::*;
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match diesel::update(posts.filter(id.eq(post_id)))
+    match diesel::update(posts.filter(slug.eq(post_slug)))
         .set(deleted_at.eq(Some(current_time)))
         .execute(&mut conn)
     {
@@ -163,14 +163,14 @@ pub async fn delete(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespon
     }
 }
 
-#[post("/post/{id}/restore")]
-pub async fn restore(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpResponse {
-    let post_id = path.into_inner();
+#[post("/post/{slug}/restore")]
+pub async fn restore(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpResponse {
+    let post_slug = path.into_inner();
     
     use crate::schema::posts::dsl::*;
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match diesel::update(posts.filter(id.eq(post_id)))
+    match diesel::update(posts.filter(slug.eq(post_slug)))
         .set(deleted_at.eq(None::<NaiveDateTime>))
         .execute(&mut conn)
     {

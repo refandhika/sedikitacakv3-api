@@ -8,10 +8,14 @@ use crate::constants::USER_BIRTH_NOTFOUND;
 use crate::schema::users;
 use crate::schema::posts;
 use crate::schema::post_categories;
+use crate::schema::projects;
+use crate::schema::techs;
 
 use crate::response::UserResponseWithoutPass;
 use crate::response::PostResponse;
 use crate::response::PostCatResponse;
+use crate::response::ProjectResponse;
+use crate::response::TechResponse;
 
 // User Database Struct
 
@@ -111,6 +115,68 @@ impl PostCatDB {
             created_at: Utc.from_utc_datetime(&self.created_at),
             updated_at: Utc.from_utc_datetime(&self.updated_at),
             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt))
+        }
+    }
+}
+
+#[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
+#[diesel(table_name = projects)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct ProjectDB {
+    pub id: i32,
+    pub title: String,
+    pub content: String,
+    //pub tech_list_id: Option<i32>,
+    pub source: Option<String>,
+    pub url: Option<String>,
+    pub demo: Option<String>,
+    pub relevant: bool,
+    pub published: bool,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+}
+
+impl ProjectDB {
+    pub fn get_by_id(&self) -> ProjectResponse {
+        ProjectResponse {
+            id: self.id.clone(),
+            title: self.title.clone(),
+            content: self.content.clone(),
+            //tech_list_id: self.tech_list_id.clone()
+            source: self.source.clone(),
+            url: self.url.clone(),
+            demo: self.demo.clone(),
+            relevant: self.relevant.clone(),
+            created_at: Utc.from_utc_datetime(&self.created_at),
+            updated_at: Utc.from_utc_datetime(&self.updated_at),
+            deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
+            published: self.published.clone(),
+        }
+    }
+}
+
+#[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
+#[diesel(table_name = techs)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct TechDB {
+    pub id: i32,
+    pub title: String,
+    pub icon: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+}
+
+impl TechDB {
+    pub fn get_by_id(&self) -> TechResponse {
+        TechResponse {
+            id: self.id.clone(),
+            title: self.title.clone(),
+            icon: self.icon.clone(),
+            created_at: Utc.from_utc_datetime(&self.created_at),
+            updated_at: Utc.from_utc_datetime(&self.updated_at),
+            deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
         }
     }
 }

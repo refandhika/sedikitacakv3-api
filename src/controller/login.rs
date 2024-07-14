@@ -30,16 +30,16 @@ fn generate_jwt(user_id: String) -> String {
 // Routing
 
 #[post("/login")]
-async fn login(user_req: web::Json<LoginRequest>, pool: web::Data<DBPool>) -> HttpResponse {
+async fn login(login_req: web::Json<LoginRequest>, pool: web::Data<DBPool>) -> HttpResponse {
     use crate::schema::users::dsl::*;
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    let user: UserDB = match users.filter(email.eq(&user_req.email)).first(&mut conn) {
+    let user: UserDB = match users.filter(email.eq(&login_req.email)).first(&mut conn) {
         Ok(user_res) => user_res,
         Err(_) => return HttpResponse::Unauthorized().json(serde_json::json!({"message": "Invalid email"})),
     };
 
-    if !verify_password(&user_req.password, &user.password) {
+    if !verify_password(&login_req.password, &user.password) {
         return HttpResponse::Unauthorized().json(serde_json::json!({"message": "Invalid password"}));
     }
 

@@ -36,6 +36,39 @@ diesel::table! {
 }
 
 diesel::table! {
+    projects (id) {
+        id -> Int4,
+        #[max_length = 255]
+        title -> Varchar,
+        content -> Text,
+        #[max_length = 255]
+        source -> Nullable<Varchar>,
+        #[max_length = 255]
+        url -> Nullable<Varchar>,
+        #[max_length = 255]
+        demo -> Nullable<Varchar>,
+        relevant -> Bool,
+        published -> Bool,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
+    techs (id) {
+        id -> Int4,
+        #[max_length = 255]
+        title -> Varchar,
+        #[max_length = 255]
+        icon -> Nullable<Varchar>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     users (id) {
         id -> Uuid,
         #[max_length = 100]
@@ -63,5 +96,7 @@ diesel::joinable!(posts -> users (author_id));
 diesel::allow_tables_to_appear_in_same_query!(
     post_categories,
     posts,
+    projects,
+    techs,
     users,
 );

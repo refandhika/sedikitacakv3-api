@@ -9,7 +9,7 @@ use crate::{DBPool, DBPooledConnection};
 
 use crate::models::PostCatDB;
 
-// Post Request Struct
+// Post Category Request Struct
 #[derive(Debug, Deserialize, Serialize)]
 pub struct PostCatRequesst {
     pub name: String,
@@ -66,8 +66,8 @@ fn update_pcat(post_category: PostCatDB, pcat_id: i32, conn: &mut DBPooledConnec
 // Routing
 
 #[post("/post-category")]
-pub async fn create(user_req: web::Json<PostCatRequesst>, pool: web::Data<DBPool>) -> HttpResponse {
-    match user_req.to_pcat_db() {
+pub async fn create(postcat_req: web::Json<PostCatRequesst>, pool: web::Data<DBPool>) -> HttpResponse {
+    match postcat_req.to_pcat_db() {
         Ok(postcat_db) => {
             let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
             match create_pcat(postcat_db, &mut conn) {
@@ -86,9 +86,9 @@ pub async fn create(user_req: web::Json<PostCatRequesst>, pool: web::Data<DBPool
 }
 
 #[post("/post-category/{id}")]
-pub async fn update(path: web::Path<i32>, user_req: web::Json<PostCatRequesst>, pool: web::Data<DBPool>) -> HttpResponse {
+pub async fn update(path: web::Path<i32>, postcat_req: web::Json<PostCatRequesst>, pool: web::Data<DBPool>) -> HttpResponse {
     let pcat_id = path.into_inner();
-    match user_req.to_pcat_db() {
+    match postcat_req.to_pcat_db() {
         Ok(postcat_db) => {
             let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
             match update_pcat(postcat_db, pcat_id, &mut conn) {

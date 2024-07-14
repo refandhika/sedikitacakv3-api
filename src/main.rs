@@ -3,23 +3,25 @@ extern crate diesel;
 
 use std::{io, env};
 
-use actix_web::{HttpServer, App, middleware, web};
+use actix_web::{HttpServer, App, middleware as WebMiddleware, web};
 use diesel::r2d2::ConnectionManager;
 use diesel::PgConnection;
 use r2d2::{Pool, PooledConnection};
 
-use crate::auth::AuthMiddleware;
+use crate::middleware::auth::AuthMiddleware;
+use crate::controller::login;
+use crate::controller::user;
+use crate::controller::post;
+use crate::controller::postcat;
+use crate::controller::project;
+use crate::controller::tech;
 
 mod constants;
 mod response;
 mod models;
 mod schema;
-mod auth;
-
-mod login;
-mod user;
-mod post;
-mod postcat;
+mod middleware;
+mod controller;
 
 pub type DBPool = Pool<ConnectionManager<PgConnection>>;
 pub type DBPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
@@ -40,13 +42,12 @@ async fn main() -> io::Result<()> {
     let _ = HttpServer::new(move || {
         App::new()
             .data(pool.clone())
-            .wrap(middleware::Logger::default())
+            .wrap(WebMiddleware::Logger::default())
             .service(
                 web::scope("/pub")
                 .service(login::login)
                 .service(user::get)
                 .service(post::get)
-                .service(postcat::get)
             )
             .service(
                 web::scope("/pro")
@@ -59,10 +60,21 @@ async fn main() -> io::Result<()> {
                 .service(post::update)
                 .service(post::delete)
                 .service(post::restore)
+                .service(postcat::get)
                 .service(postcat::create)
                 .service(postcat::update)
                 .service(postcat::delete)
                 .service(postcat::restore)
+                .service(project::get)
+                .service(project::create)
+                .service(project::update)
+                .service(project::delete)
+                .service(project::restore)
+                .service(tech::get)
+                .service(tech::create)
+                .service(tech::update)
+                .service(tech::delete)
+                .service(tech::restore)
             )
             .app_data(web::Data::new(pool.clone()))
     })
