@@ -13,6 +13,15 @@ Notable library used:
 - Serde
 
 **Project Still On Going!**
+---
+
+To Do:
+- Set up all main CRUD endpoint
+- Join `post category` data to `post`
+- Join `tech` data to `project`
+- Add custom ordering capability to `project` and `hobby`
+- Add guest account functionality for demo purpose
+- Add mailing capability for contact forms
 
 ---
 
@@ -57,7 +66,6 @@ Notable library used:
 
 `/post/:slug`
 - GET: Get a post by slug
-    - Has `cat` data
 - UPDATE: Update a post by slug  (Authorized) - **Done**
 - DELETE: Soft delete a post by slug  (Authorized) - **Done**
 
@@ -68,6 +76,7 @@ Notable library used:
 - POST: Save new post category (Authorized) - **Done**
 
 `/post-category/:id`
+- GET: Get a post category by ID  (Authorized) - **Done**
 - UPDATE: Update a post category by ID  (Authorized) - **Done**
 - DELETE: Soft delete a post category by ID  (Authorized) - **Done**
 
@@ -84,7 +93,6 @@ Notable library used:
 
 `/project/:id`
 - GET: Get a project by ID (Authorized)
-    - Has `tech` list data
 - UPDATE: Update a project by ID  (Authorized) - **Done**
 - DELETE: Soft delete a project by ID  (Authorized) - **Done**
 
