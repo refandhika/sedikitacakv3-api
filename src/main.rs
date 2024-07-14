@@ -15,6 +15,7 @@ use crate::controller::post;
 use crate::controller::postcat;
 use crate::controller::project;
 use crate::controller::tech;
+use crate::controller::role;
 
 mod constants;
 mod response;
@@ -75,6 +76,11 @@ async fn main() -> io::Result<()> {
                 .service(tech::update)
                 .service(tech::delete)
                 .service(tech::restore)
+                .service(role::get)
+                .service(role::create)
+                .service(role::update)
+                .service(role::delete)
+                .service(role::restore)
             )
             .app_data(web::Data::new(pool.clone()))
     })

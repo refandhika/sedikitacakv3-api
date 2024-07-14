@@ -101,3 +101,17 @@ pub struct TechResponse {
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>
 }
+
+#[derive(Debug, Serialize)]
+pub struct RoleResponse {
+    pub id: i32,
+    pub name: String,
+    pub level: String,
+    pub can_modify_user: bool,
+    pub can_edit: bool,
+    pub can_view: bool,
+    pub is_guest: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
+}

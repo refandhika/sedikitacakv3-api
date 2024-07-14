@@ -45,15 +45,15 @@ To Do:
 - GET: Get all available roles (Authorized)
 
 `/role`
-- POST: Create new role (Authorized)
+- POST: Create new role (Authorized) - **Done**
 
 `/role/:id`
-- GET: Get a role by ID (Authorized)
-- UPDATE: Update a role by ID  (Authorized)
-- DELETE: Soft delete a role by ID  (Authorized)
+- GET: Get a role by ID (Authorized) - **Done**
+- UPDATE: Update a role by ID  (Authorized) - **Done**
+- DELETE: Soft delete a role by ID  (Authorized) - **Done**
 
 `/role/:id/restore`
-- POST: Restore a role by id (Authorized)
+- POST: Restore a role by id (Authorized) - **Done**
 
 `/posts`
 - GET: Get all post limited by 10 per page

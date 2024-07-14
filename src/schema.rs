@@ -56,6 +56,23 @@ diesel::table! {
 }
 
 diesel::table! {
+    roles (id) {
+        id -> Int4,
+        #[max_length = 255]
+        name -> Varchar,
+        #[max_length = 255]
+        level -> Varchar,
+        can_modify_user -> Bool,
+        can_edit -> Bool,
+        can_view -> Bool,
+        is_guest -> Bool,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     techs (id) {
         id -> Int4,
         #[max_length = 255]
@@ -97,6 +114,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     post_categories,
     posts,
     projects,
+    roles,
     techs,
     users,
 );
