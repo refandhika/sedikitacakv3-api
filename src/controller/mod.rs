@@ -5,3 +5,4 @@ pub mod postcat;
 pub mod project;
 pub mod tech;
 pub mod role;
+pub mod hobby;

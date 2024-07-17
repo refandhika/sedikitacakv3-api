@@ -3,7 +3,6 @@ use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
 use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods};
-use uuid::Uuid;
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
 use crate::{DBPool, DBPooledConnection};

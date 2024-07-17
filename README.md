@@ -117,15 +117,15 @@ To Do:
 - GET: Get all hobbies lists
 
 `/hobby`
-- POST: Save new hobby (Authorized)
+- POST: Save new hobby (Authorized) - **Done**
 
 `/hobby/:id`
-- GET: Get a hobby by ID (Authorized)
-- UPDATE: Update a hobby by ID  (Authorized)
-- DELETE: Soft delete a hobby by ID  (Authorized)
+- GET: Get a hobby by ID (Authorized) - **Done**
+- UPDATE: Update a hobby by ID  (Authorized) - **Done**
+- DELETE: Soft delete a hobby by ID  (Authorized) - **Done**
 
 `/hobby/:id/restore`
-- POST: Restore a hobby by ID (Authorized)
+- POST: Restore a hobby by ID (Authorized) - **Done**
 
 `/setting`
 - POST: Set a global param  (Authorized)

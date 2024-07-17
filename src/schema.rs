@@ -1,6 +1,23 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    hobbies (id) {
+        id -> Int4,
+        #[max_length = 255]
+        title -> Varchar,
+        content -> Text,
+        #[max_length = 255]
+        image -> Nullable<Varchar>,
+        item_order -> Int4,
+        active -> Bool,
+        published -> Bool,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     post_categories (id) {
         id -> Int4,
         #[max_length = 255]
@@ -111,6 +128,7 @@ diesel::joinable!(posts -> post_categories (category_id));
 diesel::joinable!(posts -> users (author_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    hobbies,
     post_categories,
     posts,
     projects,

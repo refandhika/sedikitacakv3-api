@@ -11,6 +11,7 @@ use crate::schema::post_categories;
 use crate::schema::projects;
 use crate::schema::techs;
 use crate::schema::roles;
+use crate::schema::hobbies;
 
 use crate::response::UserResponseWithoutPass;
 use crate::response::PostResponse;
@@ -18,6 +19,7 @@ use crate::response::PostCatResponse;
 use crate::response::ProjectResponse;
 use crate::response::TechResponse;
 use crate::response::RoleResponse;
+use crate::response::HobbyResponse;
 
 // User Database Struct
 
@@ -209,6 +211,39 @@ impl RoleDB {
             can_edit: self.can_edit.clone(),
             can_view: self.can_view.clone(),
             is_guest: self.is_guest.clone(),
+            created_at: Utc.from_utc_datetime(&self.created_at),
+            updated_at: Utc.from_utc_datetime(&self.updated_at),
+            deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
+        }
+    }
+}
+
+#[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
+#[diesel(table_name = hobbies)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct HobbyDB {
+    pub id: i32,
+    pub title: String,
+    pub content: String,
+    pub image: Option<String>,
+    pub item_order: i32,
+    pub active: bool,
+    pub published: bool,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+}
+
+impl HobbyDB {
+    pub fn get_by_id(&self) -> HobbyResponse {
+        HobbyResponse {
+            id: self.id.clone(),
+            title: self.title.clone(),
+            content: self.content.clone(),
+            image: self.image.clone(),
+            item_order: self.item_order.clone(),
+            active: self.active.clone(),
+            published: self.published.clone(),
             created_at: Utc.from_utc_datetime(&self.created_at),
             updated_at: Utc.from_utc_datetime(&self.updated_at),
             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),

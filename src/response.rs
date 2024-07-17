@@ -115,3 +115,18 @@ pub struct RoleResponse {
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
 }
+
+
+#[derive(Debug, Serialize)]
+pub struct HobbyResponse {
+    pub id: i32,
+    pub title: String,
+    pub content: String,
+    pub image: Option<String>,
+    pub item_order: i32,
+    pub active: bool,
+    pub published: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
+}
