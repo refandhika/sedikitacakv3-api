@@ -90,6 +90,20 @@ diesel::table! {
 }
 
 diesel::table! {
+    settings (id) {
+        id -> Int4,
+        #[max_length = 255]
+        param -> Varchar,
+        #[max_length = 255]
+        value -> Varchar,
+        note -> Nullable<Text>,
+        created_at -> Timestamp,
+        updated_at -> Timestamp,
+        deleted_at -> Nullable<Timestamp>,
+    }
+}
+
+diesel::table! {
     techs (id) {
         id -> Int4,
         #[max_length = 255]
@@ -133,6 +147,7 @@ diesel::allow_tables_to_appear_in_same_query!(
     posts,
     projects,
     roles,
+    settings,
     techs,
     users,
 );

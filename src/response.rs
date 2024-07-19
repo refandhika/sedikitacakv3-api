@@ -75,7 +75,6 @@ pub struct PostCatResponse {
     pub deleted_at: Option<DateTime<Utc>>
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct ProjectResponse {
     pub id: i32,
@@ -116,7 +115,6 @@ pub struct RoleResponse {
     pub deleted_at: Option<DateTime<Utc>>,
 }
 
-
 #[derive(Debug, Serialize)]
 pub struct HobbyResponse {
     pub id: i32,
@@ -126,6 +124,17 @@ pub struct HobbyResponse {
     pub item_order: i32,
     pub active: bool,
     pub published: bool,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct SettingResponse {
+    pub id: i32,
+    pub param: String,
+    pub value: String,
+    pub note: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,

@@ -16,7 +16,6 @@ Notable library used:
 ---
 
 To Do:
-- Set up all main CRUD endpoint
 - Join `post category` data to `post`
 - Join `tech` data to `project`
 - Add custom ordering capability to `project` and `hobby`
@@ -92,7 +91,7 @@ To Do:
 - POST: Save new project (Authorized) - **Done**
 
 `/project/:id`
-- GET: Get a project by ID (Authorized)
+- GET: Get a project by ID (Authorized) - **Done**
 - UPDATE: Update a project by ID  (Authorized) - **Done**
 - DELETE: Soft delete a project by ID  (Authorized) - **Done**
 
@@ -128,15 +127,15 @@ To Do:
 - POST: Restore a hobby by ID (Authorized) - **Done**
 
 `/setting`
-- POST: Set a global param  (Authorized)
+- POST: Set a global param  (Authorized) - **Done**
 
 `/setting/:param`
-- GET: Get a global param
-- UPDATE: Update a global param  (Authorized)
-- DELETE: Delete a global param  (Authorized)
+- GET: Get a global param - **Done**
+- UPDATE: Update a global param  (Authorized) - **Done**
+- DELETE: Delete a global param  (Authorized) - **Done**
 
 `/setting/:param`
-- POST: Restore a global param (Authorized)
+- POST: Restore a global param (Authorized) - **Done**
 
 `/contact`
 - POST: Send email from a form

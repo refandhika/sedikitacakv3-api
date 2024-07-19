@@ -17,6 +17,7 @@ use crate::controller::project;
 use crate::controller::tech;
 use crate::controller::role;
 use crate::controller::hobby;
+use crate::controller::setting;
 
 mod constants;
 mod response;
@@ -50,6 +51,7 @@ async fn main() -> io::Result<()> {
                 .service(login::login)
                 .service(user::get)
                 .service(post::get)
+                .service(setting::get)
             )
             .service(
                 web::scope("/pro")
@@ -87,6 +89,10 @@ async fn main() -> io::Result<()> {
                 .service(hobby::update)
                 .service(hobby::delete)
                 .service(hobby::restore)
+                .service(setting::create)
+                .service(setting::update)
+                .service(setting::delete)
+                .service(setting::restore)
             )
             .app_data(web::Data::new(pool.clone()))
     })
