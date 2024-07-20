@@ -43,6 +43,9 @@ To Do:
 `/login`
 - POST: Login to Authorized Page - **Done**
 
+`/guest`
+- POST: Login with demo capability
+
 `/roles`
 - GET: Get all available roles (Authorized) - **Done**
 
@@ -94,7 +97,7 @@ To Do:
 - POST: Save new project (Authorized) - **Done**
 
 `/project/:id`
-- GET: Get a project by ID (Authorized) - **Done**
+- GET: Get a project by ID (Authorized)
 - UPDATE: Update a project by ID  (Authorized) - **Done**
 - DELETE: Soft delete a project by ID  (Authorized) - **Done**
 
@@ -123,7 +126,7 @@ To Do:
 
 `/hobby/:id`
 - GET: Get a hobby by ID (Authorized) - **Done**
-- UPDATE: Update a hobby by ID  (Authorized) - **Done**
+- UPDATE: Update a hobby by ID  (Authorized)
 - DELETE: Soft delete a hobby by ID  (Authorized) - **Done**
 
 `/hobby/:id/restore`
