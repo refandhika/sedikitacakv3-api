@@ -37,6 +37,13 @@ impl RoleRequest {
     }
 }
 
+// Pagination Request Struct
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<i32>,
+    pub limit: Option<i32>
+}
+
 // Class Wide Function
 
 fn create_role(role: RoleDB, conn: &mut DBPooledConnection) -> Result<RoleDB, Error> {
@@ -69,6 +76,16 @@ fn update_role(role: RoleDB, role_id: i32, conn: &mut DBPooledConnection) -> Res
             updated_at.eq(Utc::now().naive_utc())
         ))
         .get_result(conn)
+}
+
+fn all_roles_with_pagination(page: i32, limit: i32, conn: &mut DBPooledConnection) -> Result<Vec<RoleDB>, Error> {
+    use crate::schema::roles::dsl::*;
+    roles
+        .filter(deleted_at.is_null())
+        .order_by(id.desc())
+        .limit(limit as i64)
+        .offset(((page - 1) * limit) as i64)
+        .load::<RoleDB>(conn)
 }
 
 // Routing
@@ -169,5 +186,21 @@ pub async fn restore(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespo
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
             .json(serde_json::json!({"message": "Failed to restore role"})),
+    }
+}
+
+#[get("/roles")]
+pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_roles_with_pagination(page, limit, &mut conn) {
+        Ok(roles) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(roles),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve roles"})),
     }
 }

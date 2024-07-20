@@ -41,6 +41,14 @@ impl ProjectRequest {
     }
 }
 
+// Pagination Request Struct
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<i32>,
+    pub limit: Option<i32>,
+    pub rlv: Option<bool>
+}
+
 // Class Wide Function
 
 fn create_project(project: ProjectDB, conn: &mut DBPooledConnection) -> Result<ProjectDB, Error> {
@@ -77,6 +85,17 @@ fn update_project(project: ProjectDB, project_id: i32, conn: &mut DBPooledConnec
             published.eq(project.published)
         ))
         .get_result(conn)
+}
+
+fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, conn: &mut DBPooledConnection) -> Result<Vec<ProjectDB>, Error> {
+    use crate::schema::projects::dsl::*;
+    projects
+        .filter(deleted_at.is_null())
+        .filter(relevant.eq(rlv))
+        .order_by(id.desc())
+        .limit(limit as i64)
+        .offset(((page - 1) * limit) as i64)
+        .load::<ProjectDB>(conn)
 }
 
 // Routing
@@ -177,5 +196,22 @@ pub async fn restore(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespo
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
             .json(serde_json::json!({"message": "Failed to restore project"})),
+    }
+}
+
+#[get("/projects")]
+pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
+    let rlv = query.rlv.unwrap_or(true);
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_project_with_pagination(page, limit, rlv, &mut conn) {
+        Ok(projects) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(projects),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve projects"})),
     }
 }

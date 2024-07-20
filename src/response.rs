@@ -60,7 +60,7 @@ pub struct PostResponse {
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
     pub published: bool,
-    pub category_id: Option<i32>,
+    pub category_id: i32,
 }
 
 #[derive(Debug, Serialize)]
@@ -138,4 +138,33 @@ pub struct SettingResponse {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
+}
+
+
+#[derive(Debug, Serialize)]
+pub struct UserResponseForPost {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PostCatResponseForPost {
+    pub id: String,
+    pub name: String,
+}
+
+#[derive(Debug, Serialize)]
+pub struct PostWithRelResponse {
+    pub id: i32,
+    pub title: String,
+    pub subtitle: Option<String>,
+    pub slug: String,
+    pub content: String,
+    pub tags: Option<String>,
+    pub author: UserResponseForPost,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+    pub deleted_at: Option<DateTime<Utc>>,
+    pub published: bool,
+    pub category: PostCatResponseForPost,
 }

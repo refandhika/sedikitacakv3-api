@@ -29,6 +29,13 @@ impl TechRequest {
     }
 }
 
+// Pagination Request Struct
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<i32>,
+    pub limit: Option<i32>
+}
+
 // Class Wide Function
 
 fn create_tech(tech: TechDB, conn: &mut DBPooledConnection) -> Result<TechDB, Error> {
@@ -55,6 +62,16 @@ fn update_tech(tech: TechDB, tech_id: i32, conn: &mut DBPooledConnection) -> Res
         .get_result(conn)
 }
 
+fn all_tech_with_pagination(page: i32, limit: i32, conn: &mut DBPooledConnection) -> Result<Vec<TechDB>, Error> {
+    use crate::schema::techs::dsl::*;
+    techs
+        .filter(deleted_at.is_null())
+        .order_by(id.desc())
+        .limit(limit as i64)
+        .offset(((page - 1) * limit) as i64)
+        .load::<TechDB>(conn)
+}
+
 // Routing
 
 #[post("/tech")]
@@ -68,7 +85,7 @@ pub async fn create(tech_req: web::Json<TechRequest>, pool: web::Data<DBPool>) -
                     .json(inserted_tech),
                 Err(e) => HttpResponse::InternalServerError()
                     .content_type(APPLICATION_JSON)
-                    .json(format!("Error inserting tech: {}", e)),
+                    .json(format!("Error inserting technology: {}", e)),
             }
         }
         Err(e) => HttpResponse::BadRequest()
@@ -89,7 +106,7 @@ pub async fn update(path: web::Path<i32>, tech_req: web::Json<TechRequest>, pool
                     .json(updated_tech),
                 Err(e) => HttpResponse::InternalServerError()
                     .content_type(APPLICATION_JSON)
-                    .json(format!("Error updating tech: {}", e)),
+                    .json(format!("Error updating technology: {}", e)),
             }
         }
         Err(e) => HttpResponse::BadRequest()
@@ -111,7 +128,7 @@ pub async fn get(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpResponse 
             .json(tech.get_by_id()),
         Err(_) => HttpResponse::NotFound()
             .content_type(APPLICATION_JSON)
-            .json("Tech not found"),
+            .json("Technology not found"),
     }
 }
 
@@ -129,10 +146,10 @@ pub async fn delete(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespon
     {
         Ok(_) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Post successfully deleted"})),
+            .json(serde_json::json!({"message": "Technology successfully deleted"})),
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Failed to delete post"})),
+            .json(serde_json::json!({"message": "Failed to delete technology"})),
     }
 }
 
@@ -149,9 +166,25 @@ pub async fn restore(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespo
     {
         Ok(_) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Post successfully restored"})),
+            .json(serde_json::json!({"message": "Technology successfully restored"})),
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Failed to restore post"})),
+            .json(serde_json::json!({"message": "Failed to restore technology"})),
+    }
+}
+
+#[get("/techs")]
+pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_tech_with_pagination(page, limit, &mut conn) {
+        Ok(techs) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(techs),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve technologies"})),
     }
 }

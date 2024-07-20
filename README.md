@@ -26,6 +26,9 @@ To Do:
 
 #### These are the planned endpoint
 
+`/users`
+- GET: Get all available users (Authorized) - **Done**
+
 `/user`
 - POST: Create new users (Disabled) - **Done**
 
@@ -41,7 +44,7 @@ To Do:
 - POST: Login to Authorized Page - **Done**
 
 `/roles`
-- GET: Get all available roles (Authorized)
+- GET: Get all available roles (Authorized) - **Done**
 
 `/role`
 - POST: Create new role (Authorized) - **Done**
@@ -55,9 +58,7 @@ To Do:
 - POST: Restore a role by id (Authorized) - **Done**
 
 `/posts`
-- GET: Get all post limited by 10 per page
-    - Have `page` parameter
-    - Have `cat` parameter
+- GET: Get all post
     - Have `cat` data
 
 `/post`
@@ -71,6 +72,9 @@ To Do:
 `/post/:slug/restore`
 - POST: Restore a post by slug (Authorized) - **Done**
 
+`/post-categories`
+- GET: Get all post categories (Authorized) - **Done**
+
 `/post-category`
 - POST: Save new post category (Authorized) - **Done**
 
@@ -83,8 +87,7 @@ To Do:
 - POST: Restore a post category by ID (Authorized) - **Done**
 
 `/projects`
-- GET: Get all project lists by 12 per page
-    - Have `relevant` parameter
+- GET: Get all project lists
     - Have `tech` list data per project
 
 `/project`
@@ -99,7 +102,7 @@ To Do:
 - POST: Restore a project by ID (Authorized) - **Done**
 
 `/techs`
-- GET: Get tech stack by 20 per page (Authorized)
+- GET: Get all tech stack (Authorized) - **Done**
 
 `/tech`
 - POST: Create new tech stack (Authorized) - **Done**
@@ -113,7 +116,7 @@ To Do:
 - POST: Restore a tech by ID (Authorized) - **Done**
 
 `/hobbies`
-- GET: Get all hobbies lists
+- GET: Get all hobbies lists - **Done**
 
 `/hobby`
 - POST: Save new hobby (Authorized) - **Done**
@@ -125,6 +128,9 @@ To Do:
 
 `/hobby/:id/restore`
 - POST: Restore a hobby by ID (Authorized) - **Done**
+
+`/settings`
+- GET: Get all settings (Authorized) - **Done**
 
 `/setting`
 - POST: Set a global param  (Authorized) - **Done**

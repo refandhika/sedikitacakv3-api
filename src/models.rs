@@ -14,14 +14,7 @@ use crate::schema::roles;
 use crate::schema::hobbies;
 use crate::schema::settings;
 
-use crate::response::UserResponseWithoutPass;
-use crate::response::PostResponse;
-use crate::response::PostCatResponse;
-use crate::response::ProjectResponse;
-use crate::response::TechResponse;
-use crate::response::RoleResponse;
-use crate::response::HobbyResponse;
-use crate::response::SettingResponse;
+use crate::response::*;
 
 // User Database Struct
 
@@ -74,11 +67,11 @@ pub struct PostDB {
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,
     pub published: bool,
-    pub category_id: Option<i32>,
+    pub category_id: i32,
 }
 
 impl PostDB {
-    pub fn get_by_id(&self) -> PostResponse {
+    pub fn get_by_slug(&self) -> PostResponse {
         PostResponse {
             id: self.id.clone(),
             title: self.title.clone(),
@@ -95,6 +88,50 @@ impl PostDB {
         }
     }
 }
+
+// #[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
+// #[diesel(check_for_backend(diesel::pg::Pg))]
+// pub struct PostWithRelDB {
+//     pub id: i32,
+//     pub title: String,
+//     pub subtitle: Option<String>,
+//     pub slug: String,
+//     pub content: String,
+//     pub tags: Option<String>,
+//     pub author_id: Uuid,
+//     pub created_at: NaiveDateTime,
+//     pub updated_at: NaiveDateTime,
+//     pub deleted_at: Option<NaiveDateTime>,
+//     pub published: bool,
+//     pub category_id: i32,
+//     pub author_name: String,
+//     pub category_name: String
+// }
+
+// impl PostWithRelDB {
+//     pub fn get_by_slug(&self) -> PostWithRelResponse {
+//         PostWithRelResponse {
+//             id: self.id.clone(),
+//             title: self.title.clone(),
+//             subtitle: self.subtitle.clone(),
+//             slug: self.slug.clone(),
+//             content: self.content.clone(),
+//             tags: self.tags.clone(),
+//             author: UserResponseForPost {
+//                 id: self.author_id.to_string(),
+//                 name: self.author_name.clone()
+//             },
+//             created_at: Utc.from_utc_datetime(&self.created_at),
+//             updated_at: Utc.from_utc_datetime(&self.updated_at),
+//             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
+//             published: self.published.clone(),
+//             category: PostCatResponseForPost {
+//                 id: self.category_id.to_string(),
+//                 name: self.category_name.clone()
+//             },
+//         }
+//     }
+// }
 
 #[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
 #[diesel(table_name = post_categories)]

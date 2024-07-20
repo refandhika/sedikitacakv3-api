@@ -47,6 +47,13 @@ impl UserRequest {
     }
 }
 
+// Pagination Request Struct
+#[derive(Debug, Deserialize)]
+pub struct PaginationParams {
+    pub page: Option<i32>,
+    pub limit: Option<i32>
+}
+
 // Class Wide Function
 
 fn create_user(user: UserDB, conn: &mut DBPooledConnection) -> Result<UserDB, Error> {
@@ -68,6 +75,16 @@ fn update_user(user: UserDB, user_id: Uuid, conn: &mut DBPooledConnection) -> Re
             updated_at.eq(Utc::now().naive_utc()),
         ))
         .get_result(conn)
+}
+
+fn all_user_with_pagination(page: i32, limit: i32, conn: &mut DBPooledConnection) -> Result<Vec<UserDB>, Error> {
+    use crate::schema::users::dsl::*;
+    users
+        .filter(deleted_at.is_null())
+        .order_by(id.desc())
+        .limit(limit as i64)
+        .offset(((page - 1) * limit) as i64)
+        .load::<UserDB>(conn)
 }
 
 // Routing
@@ -180,5 +197,21 @@ pub async fn restore(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpRe
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
             .json(serde_json::json!({"message": "Failed to restore user"})),
+    }
+}
+
+#[get("/users")]
+pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_user_with_pagination(page, limit, &mut conn) {
+        Ok(users) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(users),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve users"})),
     }
 }

@@ -48,7 +48,7 @@ diesel::table! {
         updated_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
         published -> Bool,
-        category_id -> Nullable<Int4>,
+        category_id -> Int4,
     }
 }
 
