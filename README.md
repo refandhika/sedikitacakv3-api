@@ -16,7 +16,7 @@ Notable library used:
 ---
 
 To Do:
-- Join `post category` data to `post`
+- Join `role` data to `user`
 - Join `tech` data to `project`
 - Add custom ordering capability to `project` and `hobby`
 - Add guest account functionality for demo purpose
@@ -61,14 +61,13 @@ To Do:
 - POST: Restore a role by id (Authorized) - **Done**
 
 `/posts`
-- GET: Get all post
-    - Have `cat` data
+- GET: Get all post - **Done**
 
 `/post`
 - POST: Save a new post (Authorized) - **Done**
 
 `/post/:slug`
-- GET: Get a post by slug
+- GET: Get a post by slug - **Done**
 - UPDATE: Update a post by slug  (Authorized) - **Done**
 - DELETE: Soft delete a post by slug  (Authorized) - **Done**
 

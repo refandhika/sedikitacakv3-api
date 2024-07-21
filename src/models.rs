@@ -25,6 +25,7 @@ pub struct UserDB {
     pub id: Uuid,
     pub name: String,
     pub email: String,
+    #[serde(skip)]
     pub password: String,
     pub phone: Option<String>,
     pub birth: Option<NaiveDate>,
@@ -53,6 +54,22 @@ impl UserDB {
 }
 
 #[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
+#[diesel(table_name = users)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct UserRelDB {
+    pub id: Uuid,
+    pub name: String,
+    pub email: String,
+    pub phone: Option<String>,
+    pub birth: Option<NaiveDate>,
+    pub linkedin: Option<String>,
+    pub github: Option<String>,
+    pub created_at: NaiveDateTime,
+    pub updated_at: NaiveDateTime,
+    pub deleted_at: Option<NaiveDateTime>,
+}
+
+#[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
 #[diesel(table_name = posts)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct PostDB {
@@ -69,69 +86,6 @@ pub struct PostDB {
     pub published: bool,
     pub category_id: i32,
 }
-
-impl PostDB {
-    pub fn get_by_slug(&self) -> PostResponse {
-        PostResponse {
-            id: self.id.clone(),
-            title: self.title.clone(),
-            subtitle: self.subtitle.clone(),
-            slug: self.slug.clone(),
-            content: self.content.clone(),
-            tags: self.tags.clone(),
-            author_id: self.author_id.to_string(),
-            created_at: Utc.from_utc_datetime(&self.created_at),
-            updated_at: Utc.from_utc_datetime(&self.updated_at),
-            deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
-            published: self.published.clone(),
-            category_id: self.category_id.clone(),
-        }
-    }
-}
-
-// #[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
-// #[diesel(check_for_backend(diesel::pg::Pg))]
-// pub struct PostWithRelDB {
-//     pub id: i32,
-//     pub title: String,
-//     pub subtitle: Option<String>,
-//     pub slug: String,
-//     pub content: String,
-//     pub tags: Option<String>,
-//     pub author_id: Uuid,
-//     pub created_at: NaiveDateTime,
-//     pub updated_at: NaiveDateTime,
-//     pub deleted_at: Option<NaiveDateTime>,
-//     pub published: bool,
-//     pub category_id: i32,
-//     pub author_name: String,
-//     pub category_name: String
-// }
-
-// impl PostWithRelDB {
-//     pub fn get_by_slug(&self) -> PostWithRelResponse {
-//         PostWithRelResponse {
-//             id: self.id.clone(),
-//             title: self.title.clone(),
-//             subtitle: self.subtitle.clone(),
-//             slug: self.slug.clone(),
-//             content: self.content.clone(),
-//             tags: self.tags.clone(),
-//             author: UserResponseForPost {
-//                 id: self.author_id.to_string(),
-//                 name: self.author_name.clone()
-//             },
-//             created_at: Utc.from_utc_datetime(&self.created_at),
-//             updated_at: Utc.from_utc_datetime(&self.updated_at),
-//             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
-//             published: self.published.clone(),
-//             category: PostCatResponseForPost {
-//                 id: self.category_id.to_string(),
-//                 name: self.category_name.clone()
-//             },
-//         }
-//     }
-// }
 
 #[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
 #[diesel(table_name = post_categories)]

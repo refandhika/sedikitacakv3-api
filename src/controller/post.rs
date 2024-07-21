@@ -2,14 +2,15 @@ use actix_web::{post, get, delete, web, HttpResponse};
 use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl, Queryable, IntoSql};
 use uuid::Uuid;
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
 use crate::{DBPool, DBPooledConnection};
 
 use crate::models::PostDB;
-// use crate::models::PostWithRelDB;
+use crate::models::PostCatDB;
+use crate::models::UserDB;
 
 // Post Request Struct
 #[derive(Debug, Deserialize, Serialize)]
@@ -43,6 +44,14 @@ impl PostRequest {
             published: self.published,
         })
     }
+}
+
+#[derive(Queryable, Debug, Serialize)]
+pub struct JoinedPost {
+    #[serde(flatten)]
+    pub post: PostDB,
+    pub category: PostCatDB,
+    pub user: UserDB
 }
 
 // Pagination Request Struct
@@ -91,26 +100,47 @@ fn update_post(post: PostDB, post_slug: String, conn: &mut DBPooledConnection) -
         .get_result(conn)
 }
 
-// fn all_post_with_pagination(page: i32, limit: i32, cat: String, conn: &mut DBPooledConnection) -> Result<Vec<PostWithRelDB>, Error> {
-//     use crate::schema::posts::dsl::*;
-//     use crate::schema::post_categories::dsl::post_categories;
-//     use crate::schema::users::dsl::users;
+fn all_post_with_pagination(page: i32, limit: i32, cat: String, conn: &mut DBPooledConnection) -> Result<Vec<JoinedPost>, Error> {
+    use crate::schema::posts::dsl::*;
+    use crate::schema::post_categories::dsl::{post_categories, deleted_at as category_deleted_at, slug as category_slug};
+    use crate::schema::users::dsl::{users, deleted_at as user_deleted_at};
+    
+    let mut query = posts
+        .inner_join(post_categories)
+        .inner_join(users)
+        .filter(deleted_at.is_null())
+        .filter(category_deleted_at.is_null())
+        .filter(user_deleted_at.is_null())
+        .order_by(id.desc())
+        .limit(limit as i64)
+        .offset(((page - 1) * limit) as i64)
+        .into_boxed();
 
-//     posts
-//         .inner_join(users.on(posts.author_id.eq(users.id)))
-//         .inner_join(post_categories.on(posts.category_id.eq(post_categories.id)))
-//         .filter(users.deleted_at.is_null())
-//         .filter(post_categories.deleted_at.is_null())
-//         .filter(posts.deleted_at.is_null())
-//         .select((
-//             id, title, subtitle, slug, content, tags, author_id, created_at, updated_at, deleted_at, published, category_id,
-//             users::name, post_categories::name,
-//         ))
-//         .order_by(posts.id.desc())
-//         .limit(limit as i64)
-//         .offset(((page - 1) * limit) as i64)
-//         .load::<PostWithRelDB>(conn)
-// }
+    if !cat.is_empty() {
+        query = query.filter(category_slug.eq(cat));
+    }
+
+    let result: Vec<JoinedPost> = query
+        .load::<(PostDB, PostCatDB, UserDB)>(conn)?
+        .into_iter()
+        .map(|(post, category, user)| JoinedPost { post, category, user })
+        .collect();
+
+    Ok(result)
+}
+
+fn get_single_post(post_slug: String, conn: &mut DBPooledConnection) -> Result<JoinedPost, Error> {
+    use crate::schema::posts::dsl::*;
+    use crate::schema::post_categories::dsl::{post_categories, deleted_at as category_deleted_at};
+    use crate::schema::users::dsl::{users, deleted_at as user_deleted_at};
+
+    posts
+        .inner_join(post_categories)
+        .inner_join(users)
+        .filter(slug.eq(post_slug))
+        .limit(1)
+        .get_result(conn)
+}
 
 // Routing
 
@@ -159,16 +189,14 @@ pub async fn update(path: web::Path<String>, post_req: web::Json<PostRequest>, p
 pub async fn get(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpResponse {
     let post_slug = path.into_inner();
 
-    use crate::schema::posts::dsl::*;
-
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match posts.filter(slug.eq(post_slug)).first::<PostDB>(&mut conn) {
+    match get_single_post(post_slug, &mut conn) {
         Ok(post) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(post.get_by_slug()),
-        Err(_) => HttpResponse::NotFound()
+            .json(post),
+        Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json("Post not found"),
+            .json(serde_json::json!({"message": "Post not found"})),
     }
 }
 
@@ -213,19 +241,19 @@ pub async fn restore(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpRe
     }
 }
 
-// #[get("/posts")]
-// pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
-//     let page = query.page.unwrap_or(1);
-//     let limit = query.limit.unwrap_or(20);
-//     let cat = query.cat.clone().unwrap_or("".to_string());
+#[get("/posts")]
+pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
+    let cat = query.cat.clone().unwrap_or("".to_string());
 
-//     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-//     match all_post_with_pagination(page, limit, cat, &mut conn) {
-//         Ok(posts) => HttpResponse::Ok()
-//             .content_type(APPLICATION_JSON)
-//             .json(posts),
-//         Err(_) => HttpResponse::InternalServerError()
-//             .content_type(APPLICATION_JSON)
-//             .json(serde_json::json!({"message": "Failed to retrieve posts"})),
-//     }
-// }
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_post_with_pagination(page, limit, cat, &mut conn) {
+        Ok(posts) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(posts),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve posts"})),
+    }
+}
