@@ -3,13 +3,14 @@ use chrono::{Utc, NaiveDate, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl, Queryable};
 use bcrypt::{hash, DEFAULT_COST};
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR, USER_BIRTH_NOTFOUND};
 use crate::{DBPool, DBPooledConnection};
 
 use crate::models::UserDB;
+use crate::models::RoleDB;
 
 // User Request Struct
 #[derive(Debug, Deserialize, Serialize)]
@@ -21,6 +22,7 @@ pub struct UserRequest {
     pub birth: String,
     pub linkedin: Option<String>,
     pub github: Option<String>,
+    pub role_id: i32
 }
 
 impl UserRequest {
@@ -42,9 +44,17 @@ impl UserRequest {
             birth: Some(birth_date.expect(USER_BIRTH_NOTFOUND)),
             linkedin: Some(self.linkedin.clone().unwrap_or("".to_string())),
             github: Some(self.github.clone().unwrap_or("".to_string())),
-            password: hash_password
+            password: hash_password,
+            role_id: self.role_id.clone()
         })
     }
+}
+
+#[derive(Queryable, Debug, Serialize)]
+pub struct JoinedUser {
+    #[serde(flatten)]
+    pub user: UserDB,
+    pub role: RoleDB
 }
 
 // Pagination Request Struct
@@ -85,6 +95,17 @@ fn all_user_with_pagination(page: i32, limit: i32, conn: &mut DBPooledConnection
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
         .load::<UserDB>(conn)
+}
+
+fn get_single_user(user_id: Uuid, conn: &mut DBPooledConnection) -> Result<JoinedUser, Error> {
+    use crate::schema::users::dsl::*;
+    use crate::schema::roles::dsl::{roles};
+
+    users
+        .inner_join(roles)
+        .filter(id.eq(user_id))
+        .limit(1)
+        .get_result(conn)
 }
 
 // Routing
@@ -139,17 +160,15 @@ pub async fn get(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpRespon
         Ok(uuid) => uuid,
         Err(_) => return HttpResponse::BadRequest().json("Invalid UUID format"),
     };
-
-    use crate::schema::users::dsl::*;
-
+    
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match users.filter(id.eq(user_id)).first::<UserDB>(&mut conn) {
+    match get_single_user(user_id, &mut conn) {
         Ok(user) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(user.get_by_id()),
-        Err(_) => HttpResponse::NotFound()
+            .json(user),
+        Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json("User not found"),
+            .json(serde_json::json!({"message": "User not found"})),
     }
 }
 

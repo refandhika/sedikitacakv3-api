@@ -13,6 +13,7 @@ use crate::schema::techs;
 use crate::schema::roles;
 use crate::schema::hobbies;
 use crate::schema::settings;
+use crate::schema::projects_techs;
 
 use crate::response::*;
 
@@ -34,6 +35,7 @@ pub struct UserDB {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,
+    pub role_id: i32,
 }
 
 impl UserDB {
@@ -48,7 +50,8 @@ impl UserDB {
             phone: self.phone.clone(),
             birth: self.birth.map(|date| Utc.from_utc_date(&date).and_hms_opt(0, 0, 0)).expect(USER_BIRTH_NOTFOUND),
             linkedin: self.linkedin.clone(),
-            github: self.github.clone()
+            github: self.github.clone(),
+            role_id: self.role_id.clone(),
         }
     }
 }
@@ -123,7 +126,6 @@ pub struct ProjectDB {
     pub id: i32,
     pub title: String,
     pub content: String,
-    //pub tech_list_id: Option<i32>,
     pub source: Option<String>,
     pub url: Option<String>,
     pub demo: Option<String>,
@@ -140,7 +142,6 @@ impl ProjectDB {
             id: self.id.clone(),
             title: self.title.clone(),
             content: self.content.clone(),
-            //tech_list_id: self.tech_list_id.clone()
             source: self.source.clone(),
             url: self.url.clone(),
             demo: self.demo.clone(),
@@ -176,6 +177,13 @@ impl TechDB {
             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
         }
     }
+}
+
+#[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
+#[diesel(table_name = projects_techs)]
+pub struct ProjectTech {
+    pub project_id: i32,
+    pub tech_id: i32,
 }
 
 #[derive(Queryable, Selectable, Insertable, Serialize, Debug)]

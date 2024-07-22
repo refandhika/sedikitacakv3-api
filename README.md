@@ -16,7 +16,6 @@ Notable library used:
 ---
 
 To Do:
-- Join `role` data to `user`
 - Join `tech` data to `project`
 - Add custom ordering capability to `project` and `hobby`
 - Add guest account functionality for demo purpose

@@ -45,6 +45,7 @@ pub struct UserResponseWithoutPass {
     pub birth: Option<DateTime<Utc>>,
     pub linkedin: Option<String>,
     pub github: Option<String>,
+    pub role_id: i32,
 }
 
 #[derive(Debug, Serialize)]

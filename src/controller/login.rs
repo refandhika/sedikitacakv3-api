@@ -45,6 +45,9 @@ async fn login(login_req: web::Json<LoginRequest>, pool: web::Data<DBPool>) -> H
 
     let token = generate_jwt(user.id.to_string());
 
-    HttpResponse::Ok().json(serde_json::json!({"token": token}))
+    HttpResponse::Ok().json(serde_json::json!({
+        "token": token,
+        "user_id": user.id.to_string()
+    }))
 }
 

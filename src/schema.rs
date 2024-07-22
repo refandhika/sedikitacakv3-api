@@ -73,6 +73,13 @@ diesel::table! {
 }
 
 diesel::table! {
+    projects_techs (project_id, tech_id) {
+        project_id -> Int4,
+        tech_id -> Int4,
+    }
+}
+
+diesel::table! {
     roles (id) {
         id -> Int4,
         #[max_length = 255]
@@ -135,17 +142,22 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
+        role_id -> Int4,
     }
 }
 
 diesel::joinable!(posts -> post_categories (category_id));
 diesel::joinable!(posts -> users (author_id));
+diesel::joinable!(projects_techs -> projects (project_id));
+diesel::joinable!(projects_techs -> techs (tech_id));
+diesel::joinable!(users -> roles (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     hobbies,
     post_categories,
     posts,
     projects,
+    projects_techs,
     roles,
     settings,
     techs,
