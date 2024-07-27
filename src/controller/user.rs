@@ -3,7 +3,7 @@ use chrono::{Utc, NaiveDate, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl, Queryable};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, Queryable};
 use bcrypt::{hash, DEFAULT_COST};
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR, USER_BIRTH_NOTFOUND};

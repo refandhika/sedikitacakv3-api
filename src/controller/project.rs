@@ -2,43 +2,32 @@ use actix_web::{post, get, delete, web, HttpResponse};
 use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl, Queryable, Table};
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
 use crate::{DBPool, DBPooledConnection};
 
 use crate::models::ProjectDB;
+use crate::models::TechDB;
 
 // Project Request Struct
 #[derive(Debug, Deserialize, Serialize)]
 pub struct ProjectRequest {
     pub title: String,
     pub content: String,
-    //pub tech_list_id: Option<i32>,
     pub source: Option<String>,
     pub url: Option<String>,
     pub demo: Option<String>,
     pub relevant: bool,
     pub published: bool,
+    pub tech_ids: Vec<i32>,
 }
 
-impl ProjectRequest {
-    pub fn to_project_db(&self) -> Result<ProjectDB, String> {
-        Ok(ProjectDB {
-            id: 1,
-            title: self.title.clone(),
-            content: self.content.clone(),
-            //tech_list_id: Some(self.texh_list_id.clone()),
-            source: Some(self.source.clone().unwrap_or("".to_string())),
-            url: Some(self.url.clone().unwrap_or("".to_string())),
-            demo: Some(self.demo.clone().unwrap_or("".to_string())),
-            relevant: self.relevant,
-            created_at: Utc::now().naive_utc(),
-            updated_at: Utc::now().naive_utc(),
-            deleted_at: None,
-            published: self.published,
-        })
-    }
+#[derive(Queryable, Debug, Serialize)]
+pub struct ProjectTechJoin {
+    #[serde(flatten)]
+    pub project: ProjectDB,
+    pub techs: Vec<TechDB>
 }
 
 // Pagination Request Struct
@@ -51,93 +40,216 @@ pub struct PaginationParams {
 
 // Class Wide Function
 
-fn create_project(project: ProjectDB, conn: &mut DBPooledConnection) -> Result<ProjectDB, Error> {
+fn create_project(project: ProjectRequest, conn: &mut DBPooledConnection) -> Result<ProjectTechJoin, Error> {
     use crate::schema::projects::dsl::*;
-    diesel::insert_into(projects)
+    use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
+    use crate::schema::techs::dsl::{techs, id as techs_id};
+
+    let project_db: ProjectDB = ProjectDB {
+        id: 1,
+        title: project.title.clone(),
+        content: project.content.clone(),
+        source: Some(project.source.clone().unwrap_or("".to_string())),
+        url: Some(project.url.clone().unwrap_or("".to_string())),
+        demo: Some(project.demo.clone().unwrap_or("".to_string())),
+        relevant: project.relevant,
+        created_at: Utc::now().naive_utc(),
+        updated_at: Utc::now().naive_utc(),
+        deleted_at: None,
+        published: project.published,
+    };
+    
+    let inserted_project: ProjectDB = diesel::insert_into(projects)
         .values((
-            title.eq(project.title),
-            content.eq(project.content),
-            //tech_list_id.eq(project.tech_list_id),
-            source.eq(project.source),
-            url.eq(project.url),
-            demo.eq(project.demo),
-            relevant.eq(project.relevant),
-            created_at.eq(project.created_at),
-            updated_at.eq(project.updated_at),
-            deleted_at.eq(project.deleted_at),
-            published.eq(project.published),
+            title.eq(project_db.title),
+            content.eq(project_db.content),
+            source.eq(project_db.source),
+            url.eq(project_db.url),
+            demo.eq(project_db.demo),
+            relevant.eq(project_db.relevant),
+            created_at.eq(project_db.created_at),
+            updated_at.eq(project_db.updated_at),
+            deleted_at.eq(project_db.deleted_at),
+            published.eq(project_db.published),
         ))
-        .get_result(conn)
+        .get_result(conn)?;
+
+    for tech_id_item in project.tech_ids {
+        let _ = diesel::insert_into(projects_techs)
+            .values((
+                pt_project_id.eq(inserted_project.id),
+                pt_tech_id.eq(tech_id_item),
+            ))
+            .execute(conn);
+    }
+
+    
+    let project = projects
+        .find(inserted_project.id)
+        .first::<ProjectDB>(conn)?;
+
+    let tech_list = projects_techs
+        .filter(pt_project_id.eq(inserted_project.id))
+        .inner_join(
+            techs.on(pt_tech_id.eq(techs_id))
+        )
+        .select(techs::all_columns())
+        .load::<TechDB>(conn)?;
+
+    Ok(ProjectTechJoin {
+        project,
+        techs: tech_list
+    })
 }
 
-fn update_project(project: ProjectDB, project_id: i32, conn: &mut DBPooledConnection) -> Result<ProjectDB, Error> {
+fn update_project(project: ProjectRequest, project_id: i32, conn: &mut DBPooledConnection) -> Result<ProjectTechJoin, Error> {
+    
     use crate::schema::projects::dsl::*;
-    diesel::update(projects.filter(id.eq(project_id)))
+    use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
+    use crate::schema::techs::dsl::{techs, id as techs_id};
+
+    let project_db: ProjectDB = ProjectDB {
+        id: 1,
+        title: project.title.clone(),
+        content: project.content.clone(),
+        source: Some(project.source.clone().unwrap_or("".to_string())),
+        url: Some(project.url.clone().unwrap_or("".to_string())),
+        demo: Some(project.demo.clone().unwrap_or("".to_string())),
+        relevant: project.relevant,
+        created_at: Utc::now().naive_utc(),
+        updated_at: Utc::now().naive_utc(),
+        deleted_at: None,
+        published: project.published,
+    };
+    
+    let _: ProjectDB = diesel::update(projects.filter(id.eq(project_id)))
         .set((
-            title.eq(project.title),
-            content.eq(project.content),
-            //tech_list_id.eq(project.tech_list_id),
-            source.eq(project.source),
-            url.eq(project.url),
-            demo.eq(project.demo),
-            relevant.eq(project.relevant),
+            title.eq(project_db.title),
+            content.eq(project_db.content),
+            source.eq(project_db.source),
+            url.eq(project_db.url),
+            demo.eq(project_db.demo),
+            relevant.eq(project_db.relevant),
             updated_at.eq(Utc::now().naive_utc()),
-            published.eq(project.published)
+            published.eq(project_db.published)
         ))
-        .get_result(conn)
+        .get_result(conn)?;
+
+    diesel::delete(projects_techs.filter(pt_project_id.eq(project_id)))
+        .execute(conn)?;
+
+    for tech_id_item in project.tech_ids {
+        let _ = diesel::insert_into(projects_techs)
+            .values((
+                pt_project_id.eq(project_id),
+                pt_tech_id.eq(tech_id_item),
+            ))
+            .execute(conn);
+    }
+    
+    let project = projects
+        .find(project_id)
+        .first::<ProjectDB>(conn)?;
+
+    let tech_list = projects_techs
+        .filter(pt_project_id.eq(project_id))
+        .inner_join(
+            techs.on(pt_tech_id.eq(techs_id))
+        )
+        .select(techs::all_columns())
+        .load::<TechDB>(conn)?;
+
+    Ok(ProjectTechJoin {
+        project,
+        techs: tech_list
+    })
 }
 
-fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, conn: &mut DBPooledConnection) -> Result<Vec<ProjectDB>, Error> {
+fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, conn: &mut DBPooledConnection) -> Result<Vec<ProjectTechJoin>, Error> {
     use crate::schema::projects::dsl::*;
-    projects
+    use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
+    use crate::schema::techs::dsl::{techs, id as techs_id};
+
+    let projects_list = projects
         .filter(deleted_at.is_null())
         .filter(relevant.eq(rlv))
         .order_by(id.desc())
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
-        .load::<ProjectDB>(conn)
+        .load::<ProjectDB>(conn)?;
+
+    let mut result = Vec::new();
+
+    for project in projects_list {
+        let tech_list = projects_techs
+            .filter(pt_project_id.eq(project.id))
+            .inner_join(
+                techs.on(pt_tech_id.eq(techs_id))
+            )
+            .select(techs::all_columns())
+            .load::<TechDB>(conn)?;
+
+        result.push(ProjectTechJoin {
+            project,
+            techs: tech_list,
+        })
+    }
+
+    Ok(result)
+}
+
+fn get_single_project(project_id: i32, conn: &mut DBPooledConnection) -> Result<ProjectTechJoin, Error> {
+    use crate::schema::projects::dsl::*;
+    use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
+    use crate::schema::techs::dsl::{techs, id as techs_id};
+
+    let project = projects
+        .find(project_id)
+        .first::<ProjectDB>(conn)?;
+
+    let tech_list = projects_techs
+        .filter(pt_project_id.eq(project_id))
+        .inner_join(
+            techs.on(pt_tech_id.eq(techs_id))
+        )
+        .select(techs::all_columns())
+        .load::<TechDB>(conn)?;
+
+    Ok(ProjectTechJoin {
+        project,
+        techs: tech_list
+    })
 }
 
 // Routing
 
 #[post("/project")]
 pub async fn create(project_req: web::Json<ProjectRequest>, pool: web::Data<DBPool>) -> HttpResponse {
-    match project_req.to_project_db() {
-        Ok(project_db) => {
-            let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-            match create_project(project_db, &mut conn) {
-                Ok(inserted_project) => HttpResponse::Created()
-                    .content_type(APPLICATION_JSON)
-                    .json(inserted_project),
-                Err(e) => HttpResponse::InternalServerError()
-                    .content_type(APPLICATION_JSON)
-                    .json(format!("Error inserting project: {}", e)),
-            }
-        }
-        Err(e) => HttpResponse::BadRequest()
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    let project_req_inner = project_req.into_inner();
+    match create_project(project_req_inner, &mut conn) {
+        Ok(inserted_project) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(e),
+            .json(inserted_project),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Error inserting project: {}"})),
     }
 }
 
 #[post("/project/{id}")]
 pub async fn update(path: web::Path<i32>, project_req: web::Json<ProjectRequest>, pool: web::Data<DBPool>) -> HttpResponse {
     let project_id = path.into_inner();
-    match project_req.to_project_db() {
-        Ok(project_db) => {
-            let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-            match update_project(project_db, project_id, &mut conn) {
-                Ok(updated_project) => HttpResponse::Created()
-                    .content_type(APPLICATION_JSON)
-                    .json(updated_project),
-                Err(e) => HttpResponse::InternalServerError()
-                    .content_type(APPLICATION_JSON)
-                    .json(format!("Error updating project: {}", e)),
-            }
-        }
-        Err(e) => HttpResponse::BadRequest()
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    let project_req_inner = project_req.into_inner();
+    match update_project(project_req_inner, project_id, &mut conn) {
+        Ok(inserted_project) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(e),
+            .json(inserted_project),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Error updating project: {}"})),
     }
 }
 
@@ -145,16 +257,14 @@ pub async fn update(path: web::Path<i32>, project_req: web::Json<ProjectRequest>
 pub async fn get(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpResponse {
     let project_id = path.into_inner();
 
-    use crate::schema::projects::dsl::*;
-
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match projects.filter(id.eq(project_id)).first::<ProjectDB>(&mut conn) {
+    match get_single_project(project_id, &mut conn) {
         Ok(project) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
-            .json(project.get_by_id()),
-        Err(_) => HttpResponse::NotFound()
+            .json(project),
+        Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json("Project not found"),
+            .json(serde_json::json!({"message": "Project not found"})),
     }
 }
 

@@ -2,7 +2,7 @@ use actix_web::{post, get, delete, web, HttpResponse};
 use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl, Queryable, IntoSql};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, Queryable};
 use uuid::Uuid;
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
@@ -131,8 +131,8 @@ fn all_post_with_pagination(page: i32, limit: i32, cat: String, conn: &mut DBPoo
 
 fn get_single_post(post_slug: String, conn: &mut DBPooledConnection) -> Result<JoinedPost, Error> {
     use crate::schema::posts::dsl::*;
-    use crate::schema::post_categories::dsl::{post_categories, deleted_at as category_deleted_at};
-    use crate::schema::users::dsl::{users, deleted_at as user_deleted_at};
+    use crate::schema::post_categories::dsl::{post_categories};
+    use crate::schema::users::dsl::{users};
 
     posts
         .inner_join(post_categories)

@@ -181,7 +181,7 @@ impl TechDB {
 
 #[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
 #[diesel(table_name = projects_techs)]
-pub struct ProjectTech {
+pub struct ProjectTechDB {
     pub project_id: i32,
     pub tech_id: i32,
 }

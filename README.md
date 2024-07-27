@@ -16,7 +16,6 @@ Notable library used:
 ---
 
 To Do:
-- Join `tech` data to `project`
 - Add custom ordering capability to `project` and `hobby`
 - Add guest account functionality for demo purpose
 - Add mailing capability for contact forms
@@ -88,14 +87,13 @@ To Do:
 - POST: Restore a post category by ID (Authorized) - **Done**
 
 `/projects`
-- GET: Get all project lists
-    - Have `tech` list data per project
+- GET: Get all project lists - **Done**
 
 `/project`
 - POST: Save new project (Authorized) - **Done**
 
 `/project/:id`
-- GET: Get a project by ID (Authorized)
+- GET: Get a project by ID (Authorized) - **Done**
 - UPDATE: Update a project by ID  (Authorized) - **Done**
 - DELETE: Soft delete a project by ID  (Authorized) - **Done**
 
