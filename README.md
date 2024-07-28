@@ -16,9 +16,9 @@ Notable library used:
 ---
 
 To Do:
-- Add custom ordering capability to `project` and `hobby`
-- Add guest account functionality for demo purpose
+- Add image upload capability
 - Add mailing capability for contact forms
+- Add guest account functionality for demo purpose
 
 ---
 
@@ -122,7 +122,7 @@ To Do:
 
 `/hobby/:id`
 - GET: Get a hobby by ID (Authorized) - **Done**
-- UPDATE: Update a hobby by ID  (Authorized)
+- UPDATE: Update a hobby by ID  (Authorized) - **Done**
 - DELETE: Soft delete a hobby by ID  (Authorized) - **Done**
 
 `/hobby/:id/restore`
@@ -141,6 +141,14 @@ To Do:
 
 `/setting/:param`
 - POST: Restore a global param (Authorized) - **Done**
+
+`/images`
+- Get: Get all images (Authorized)
+
+`/image`
+- POST: Upload an image (Authorized)
+- GET: Get an image
+- DELETE: Delete an image (Authorized)
 
 `/contact`
 - POST: Send email from a form

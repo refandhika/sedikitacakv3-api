@@ -18,6 +18,7 @@ pub struct HobbyRequest {
     pub item_order: i32,
     pub active: bool,
     pub published: bool,
+    pub order: i32
 }
 
 impl HobbyRequest {
@@ -33,6 +34,7 @@ impl HobbyRequest {
             updated_at: Utc::now().naive_utc(),
             deleted_at: None,
             published: self.published,
+            order: self.order.clone(),
         })
     }
 }
@@ -48,6 +50,7 @@ pub struct PaginationParams {
 
 fn create_hobby(hobby: HobbyDB, conn: &mut DBPooledConnection) -> Result<HobbyDB, Error> {
     use crate::schema::hobbies::dsl::*;
+    let next_order =  get_next_order(conn)?;
     diesel::insert_into(hobbies)
         .values((
             title.eq(hobby.title),
@@ -59,6 +62,7 @@ fn create_hobby(hobby: HobbyDB, conn: &mut DBPooledConnection) -> Result<HobbyDB
             updated_at.eq(hobby.updated_at),
             deleted_at.eq(hobby.deleted_at),
             published.eq(hobby.published),
+            order.eq(next_order)
         ))
         .get_result(conn)
 }
@@ -73,7 +77,8 @@ fn update_hobby(hobby: HobbyDB, hobby_id: i32, conn: &mut DBPooledConnection) ->
             item_order.eq(hobby.item_order),
             active.eq(hobby.active),
             updated_at.eq(Utc::now().naive_utc()),
-            published.eq(hobby.published)
+            published.eq(hobby.published),
+            order.eq(hobby.order)
         ))
         .get_result(conn)
 }
@@ -82,10 +87,21 @@ fn all_hobby_with_pagination(page: i32, limit: i32, conn: &mut DBPooledConnectio
     use crate::schema::hobbies::dsl::*;
     hobbies
         .filter(deleted_at.is_null())
-        .order_by(id.desc())
+        .order_by(order.desc())
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
         .load::<HobbyDB>(conn)
+}
+
+fn get_next_order(conn: &mut DBPooledConnection) -> Result<i32, Error> {
+    use crate::schema::hobbies::dsl::*;
+
+    let next_order: i32 = hobbies
+        .select(diesel::dsl::max(order))
+        .first::<Option<i32>>(conn)?
+        .map_or(1, |max_order| max_order + 1);
+
+    Ok(next_order)
 }
 
 // Routing

@@ -134,6 +134,7 @@ pub struct ProjectDB {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,
+    pub order: i32
 }
 
 impl ProjectDB {
@@ -150,6 +151,7 @@ impl ProjectDB {
             updated_at: Utc.from_utc_datetime(&self.updated_at),
             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
             published: self.published.clone(),
+            order: self.order.clone(),
         }
     }
 }
@@ -233,6 +235,7 @@ pub struct HobbyDB {
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,
     pub deleted_at: Option<NaiveDateTime>,
+    pub order: i32
 }
 
 impl HobbyDB {
@@ -248,6 +251,7 @@ impl HobbyDB {
             created_at: Utc.from_utc_datetime(&self.created_at),
             updated_at: Utc.from_utc_datetime(&self.updated_at),
             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
+            order: self.order.clone(),
         }
     }
 }

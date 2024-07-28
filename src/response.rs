@@ -81,7 +81,6 @@ pub struct ProjectResponse {
     pub id: i32,
     pub title: String,
     pub content: String,
-    //pub tech_list_id: Option<i32>,
     pub source: Option<String>,
     pub url: Option<String>,
     pub demo: Option<String>,
@@ -89,7 +88,8 @@ pub struct ProjectResponse {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
-    pub published: bool
+    pub published: bool,
+    pub order: i32
 }
 
 #[derive(Debug, Serialize)]
@@ -128,6 +128,7 @@ pub struct HobbyResponse {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
+    pub order: i32
 }
 
 #[derive(Debug, Serialize)]

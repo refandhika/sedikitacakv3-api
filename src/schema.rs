@@ -14,6 +14,7 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
+        order -> Int4,
     }
 }
 
@@ -69,6 +70,7 @@ diesel::table! {
         created_at -> Timestamp,
         updated_at -> Timestamp,
         deleted_at -> Nullable<Timestamp>,
+        order -> Int4,
     }
 }
 

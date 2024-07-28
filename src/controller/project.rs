@@ -21,6 +21,7 @@ pub struct ProjectRequest {
     pub relevant: bool,
     pub published: bool,
     pub tech_ids: Vec<i32>,
+    pub order: i32
 }
 
 #[derive(Queryable, Debug, Serialize)]
@@ -45,6 +46,8 @@ fn create_project(project: ProjectRequest, conn: &mut DBPooledConnection) -> Res
     use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
     use crate::schema::techs::dsl::{techs, id as techs_id};
 
+    let next_order =  get_next_order(conn)?;
+
     let project_db: ProjectDB = ProjectDB {
         id: 1,
         title: project.title.clone(),
@@ -57,6 +60,7 @@ fn create_project(project: ProjectRequest, conn: &mut DBPooledConnection) -> Res
         updated_at: Utc::now().naive_utc(),
         deleted_at: None,
         published: project.published,
+        order: next_order
     };
     
     let inserted_project: ProjectDB = diesel::insert_into(projects)
@@ -71,6 +75,7 @@ fn create_project(project: ProjectRequest, conn: &mut DBPooledConnection) -> Res
             updated_at.eq(project_db.updated_at),
             deleted_at.eq(project_db.deleted_at),
             published.eq(project_db.published),
+            order.eq(project_db.order),
         ))
         .get_result(conn)?;
 
@@ -120,6 +125,7 @@ fn update_project(project: ProjectRequest, project_id: i32, conn: &mut DBPooledC
         updated_at: Utc::now().naive_utc(),
         deleted_at: None,
         published: project.published,
+        order: project.order.clone(),
     };
     
     let _: ProjectDB = diesel::update(projects.filter(id.eq(project_id)))
@@ -131,7 +137,8 @@ fn update_project(project: ProjectRequest, project_id: i32, conn: &mut DBPooledC
             demo.eq(project_db.demo),
             relevant.eq(project_db.relevant),
             updated_at.eq(Utc::now().naive_utc()),
-            published.eq(project_db.published)
+            published.eq(project_db.published),
+            order.eq(project_db.order)
         ))
         .get_result(conn)?;
 
@@ -173,7 +180,7 @@ fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, conn: &mut DBPo
     let projects_list = projects
         .filter(deleted_at.is_null())
         .filter(relevant.eq(rlv))
-        .order_by(id.desc())
+        .order_by(order.desc())
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
         .load::<ProjectDB>(conn)?;
@@ -219,6 +226,17 @@ fn get_single_project(project_id: i32, conn: &mut DBPooledConnection) -> Result<
         project,
         techs: tech_list
     })
+}
+
+fn get_next_order(conn: &mut DBPooledConnection) -> Result<i32, Error> {
+    use crate::schema::projects::dsl::*;
+
+    let next_order: i32 = projects
+        .select(diesel::dsl::max(order))
+        .first::<Option<i32>>(conn)?
+        .map_or(1, |max_order| max_order + 1);
+
+    Ok(next_order)
 }
 
 // Routing
