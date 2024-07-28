@@ -7,3 +7,4 @@ pub mod tech;
 pub mod role;
 pub mod hobby;
 pub mod setting;
+pub mod image;
