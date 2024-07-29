@@ -1,7 +1,8 @@
 extern crate actix_web;
 extern crate diesel;
 
-use std::{io, env};
+use std::{io, env, fs};
+use std::path::Path;
 
 use actix_web::{HttpServer, App, middleware as WebMiddleware, web};
 use diesel::r2d2::ConnectionManager;
@@ -36,6 +37,11 @@ async fn main() -> io::Result<()> {
     env_logger::init();
 
     let _ = dotenvy::dotenv();
+
+    let upload_dir = Path::new("./uploads");
+    if !upload_dir.exists() {
+        fs::create_dir_all(upload_dir)?;
+    }
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL");
     let manager = ConnectionManager::<PgConnection>::new(database_url);

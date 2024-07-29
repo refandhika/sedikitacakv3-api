@@ -143,10 +143,10 @@ To Do:
 - POST: Restore a global param (Authorized) - **Done**
 
 `/images`
-- Get: Get all images (Authorized)
+- Get: Get all images (Authorized) - **Done**
 
 `/image`
-- POST: Upload an image (Authorized)
+- POST: Upload an image (Authorized) - **Done**
 - GET: Get an image
 - DELETE: Delete an image (Authorized)
 
