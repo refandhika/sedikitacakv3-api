@@ -53,6 +53,7 @@ async fn main() -> io::Result<()> {
         App::new()
             .data(pool.clone())
             .wrap(WebMiddleware::Logger::default())
+            .service(image::serve)
             .service(
                 web::scope("/pub")
                 .service(login::login)

@@ -1,4 +1,5 @@
-use actix_web::{post, get, delete, web, HttpResponse, Error};
+use actix_web::{post, get, delete, web, HttpRequest, HttpResponse, Error};
+use actix_files::NamedFile;
 use futures_util::stream::StreamExt as _;
 use actix_multipart::Multipart;
 use serde::{Deserialize, Serialize};
@@ -28,7 +29,30 @@ async fn save_image(mut payload: Multipart) -> Result<ImageRequest, Error> {
             .map(|filename| sanitize(filename))
             .unwrap_or_else(|| "upload_file".to_string());
 
-        let filepath = PathBuf::from(format!("./uploads/{}", filename));
+        let mut filepath = PathBuf::from(format!("./uploads/{}", filename));
+
+        let mut c = 1;
+        while filepath.exists() {
+            let file_stem = filepath
+                .file_stem()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned();
+            let extension = filepath
+                .extension()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .into_owned();
+
+            let new_filename = if extension.is_empty() {
+                format!("{}-copy{}", file_stem, c)
+            } else {
+                format!("{}-copy{}.{}", file_stem, c, extension)
+            };
+            filepath = PathBuf::from(format!("./uploads/{}", new_filename));
+            c += 1;
+        }
+
         saved_file = filepath.clone();
         let mut f = File::create(filepath)?;
 
@@ -41,7 +65,7 @@ async fn save_image(mut payload: Multipart) -> Result<ImageRequest, Error> {
     let saved_file_string = saved_file.to_string_lossy();
 
     Ok(ImageRequest {
-        filename: saved_file_string.to_string()
+        filename: format!("{}{}", "/assets/", saved_file_string.to_string())
     })
 }
 
@@ -58,17 +82,24 @@ fn get_all_image() -> Result<Vec<ImageRequest>, Error> {
     Ok(images)
 }
 
-fn get_single_image() -> Result<Vec<ImageRequest>, Error> {
+fn get_single_image(filename: String) -> Result<ImageRequest, Error> {
     let paths = fs::read_dir("./uploads").unwrap();
-    let images: Vec<ImageRequest> = paths
-        .filter_map(|entry| {
-            entry.ok().and_then(|e| {
-                e.path().file_name().and_then(|n| n.to_str().map(|s| ImageRequest { filename: s.to_string() }))
-            })
-        })
-        .collect();
+    let mut found_file = "".to_string();
+    for entry in paths {
+        if let Ok(e) = entry {
+            if let Some(file_name) = e.path().file_name() {
+                if let Some(file_name_str) = file_name.to_str() {
+                    if file_name_str == filename {
+                        found_file = format!("{}{}", "/assets/", file_name_str.to_string());
+                    }
+                }
+            }
+        }
+    }
 
-    Ok(images)
+    Ok(ImageRequest {
+        filename: found_file.to_string(),
+    })
 }
 
 // Routing
@@ -86,20 +117,22 @@ pub async fn upload(payload: Multipart) -> HttpResponse {
 }
 
 #[get("/image")]
-pub async fn get() -> HttpResponse {
-    match get_single_image() {
+pub async fn get(img_req: web::Json<ImageRequest>) -> HttpResponse {
+    let filename = &img_req.filename;
+
+    match get_single_image(filename.to_string()) {
         Ok(image) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(image),
         Err(_) => HttpResponse::InternalServerError()
             .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Failed to get image"}))
+            .json(serde_json::json!({"message": "Image not found!"}))
     }
 }
 
-#[delete("/project/{id}")]
-pub async fn delete(info: web::Json<ImageRequest>) -> Result<HttpResponse, Error> {
-    let filepath = format!("./uploads/{}", info.filename);
+#[delete("/image")]
+pub async fn delete(img_req: web::Json<ImageRequest>) -> Result<HttpResponse, Error> {
+    let filepath = format!("./uploads/{}", img_req.filename);
 
     if fs::remove_file(filepath).is_ok() {
         Ok(HttpResponse::Ok()
@@ -122,4 +155,13 @@ pub async fn all() -> HttpResponse {
             .content_type(APPLICATION_JSON)
             .json(serde_json::json!({"message": "Failed to get all images"}))
     }
+}
+
+#[get("/assets/{filename:.*}")]
+pub async fn serve(request: HttpRequest) -> Result<NamedFile, Error> {
+    let filename: String = request.match_info().query("filename").parse().unwrap();
+    println!("{}", filename);
+    let filepath: PathBuf = PathBuf::from(format!("./uploads/{}", filename));
+
+    Ok(NamedFile::open(filepath)?)
 }

@@ -16,7 +16,6 @@ Notable library used:
 ---
 
 To Do:
-- Add image upload capability
 - Add mailing capability for contact forms
 - Add guest account functionality for demo purpose
 
@@ -147,8 +146,11 @@ To Do:
 
 `/image`
 - POST: Upload an image (Authorized) - **Done**
-- GET: Get an image
-- DELETE: Delete an image (Authorized)
+- GET: Get an image (Authorized) - **Done**
+- DELETE: Delete an image (Authorized) - **Done**
+
+`/assets/:filename`
+- GET: Serve image on the web - **Done**
 
 `/contact`
 - POST: Send email from a form
