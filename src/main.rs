@@ -20,6 +20,7 @@ use crate::controller::role;
 use crate::controller::hobby;
 use crate::controller::setting;
 use crate::controller::image;
+use crate::controller::contact;
 
 mod constants;
 mod response;
@@ -27,6 +28,7 @@ mod models;
 mod schema;
 mod middleware;
 mod controller;
+mod errors;
 
 pub type DBPool = Pool<ConnectionManager<PgConnection>>;
 pub type DBPooledConnection = PooledConnection<ConnectionManager<PgConnection>>;
@@ -64,6 +66,7 @@ async fn main() -> io::Result<()> {
                 .service(hobby::all)
                 .service(setting::get)
                 .service(image::get)
+                .service(contact::send)
             )
             .service(
                 web::scope("/pro")

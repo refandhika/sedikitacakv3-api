@@ -141,3 +141,14 @@ pub struct SettingResponse {
     pub updated_at: DateTime<Utc>,
     pub deleted_at: Option<DateTime<Utc>>,
 }
+
+#[derive(Debug, Serialize)]
+pub struct ContactResponse {
+    pub id: i32,
+    pub subject: String,
+    pub name: String,
+    pub email: String,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
+    pub ip_address: Option<String>
+}

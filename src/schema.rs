@@ -1,6 +1,22 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    contacts (id) {
+        id -> Int4,
+        #[max_length = 255]
+        subject -> Varchar,
+        #[max_length = 255]
+        name -> Varchar,
+        #[max_length = 255]
+        email -> Varchar,
+        content -> Text,
+        created_at -> Timestamp,
+        #[max_length = 45]
+        ip_address -> Nullable<Varchar>,
+    }
+}
+
+diesel::table! {
     hobbies (id) {
         id -> Int4,
         #[max_length = 255]
@@ -155,6 +171,7 @@ diesel::joinable!(projects_techs -> techs (tech_id));
 diesel::joinable!(users -> roles (role_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
+    contacts,
     hobbies,
     post_categories,
     posts,

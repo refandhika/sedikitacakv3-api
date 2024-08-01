@@ -8,3 +8,4 @@ pub mod role;
 pub mod hobby;
 pub mod setting;
 pub mod image;
+pub mod contact;

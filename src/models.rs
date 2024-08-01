@@ -14,6 +14,7 @@ use crate::schema::roles;
 use crate::schema::hobbies;
 use crate::schema::settings;
 use crate::schema::projects_techs;
+use crate::schema::contacts;
 
 use crate::response::*;
 
@@ -279,6 +280,33 @@ impl SettingDB {
             created_at: Utc.from_utc_datetime(&self.created_at),
             updated_at: Utc.from_utc_datetime(&self.updated_at),
             deleted_at: self.deleted_at.map(|dt| Utc.from_utc_datetime(&dt)),
+        }
+    }
+}
+
+#[derive(Queryable, Selectable, Insertable, Serialize, Debug)]
+#[diesel(table_name = contacts)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct ContactDB {
+    pub id: i32,
+    pub subject: String,
+    pub name: String,
+    pub email: String,
+    pub content: String,
+    pub created_at: NaiveDateTime,
+    pub ip_address: Option<String>,
+}
+
+impl ContactDB {
+    pub fn get_by_id(&self) -> ContactResponse {
+        ContactResponse {
+            id: self.id.clone(),
+            subject: self.subject.clone(),
+            name: self.name.clone(),
+            email: self.email.clone(),
+            content: self.content.clone(),
+            created_at: Utc.from_utc_datetime(&self.created_at),
+            ip_address: self.ip_address.clone(),
         }
     }
 }
