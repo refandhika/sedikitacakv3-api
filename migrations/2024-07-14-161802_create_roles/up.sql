@@ -10,3 +10,5 @@ CREATE TABLE roles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     deleted_at TIMESTAMP
 );
+
+INSERT INTO roles (id, name, level, can_modify_user, can_edit, can_view, is_guest) VALUES (1, 'Administrator', 'administrator', true, true, true, false);

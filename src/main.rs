@@ -60,7 +60,7 @@ async fn main() -> io::Result<()> {
                 web::scope("/pub")
                 .service(login::login)
                 .service(user::get)
-                .service(user::create)
+                // .service(user::create)
                 .service(post::all)
                 .service(post::get)
                 .service(project::all)

@@ -11,13 +11,19 @@ services:
       - "5432:5432"
     networks:
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DOCKER_PG_USER} -d ${DOCKER_PG_DBNAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   app:
     build: .
     environment:
       DATABASE_URL: ${DOCKER_DATABASE_URL}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     ports:
       - "8080:8080"
     networks:
