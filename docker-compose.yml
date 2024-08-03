@@ -1,0 +1,31 @@
+services:
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${DOCKER_PG_USER}
+      POSTGRES_PASSWORD: ${DOCKER_PG_PASSWORD}
+      POSTGRES_DB: ${DOCKER_PG_DBNAME}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - backend
+
+  app:
+    build: .
+    environment:
+      DATABASE_URL: ${DOCKER_DATABASE_URL}
+    depends_on:
+      - db
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+
+volumes:
+  db_data:
+
+networks:
+  backend:
+
