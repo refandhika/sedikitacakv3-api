@@ -2,7 +2,7 @@ use actix_web::{post, get, delete, web, HttpResponse};
 use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, Queryable};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, Queryable, PgTextExpressionMethods, BoolExpressionMethods};
 use uuid::Uuid;
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
@@ -59,7 +59,8 @@ pub struct JoinedPost {
 pub struct PaginationParams {
     pub page: Option<i32>,
     pub limit: Option<i32>,
-    pub cat: Option<String>
+    pub cat: Option<String>,
+    pub search: Option<String>
 }
 
 // Class Wide Function
@@ -100,7 +101,7 @@ fn update_post(post: PostDB, post_slug: String, conn: &mut DBPooledConnection) -
         .get_result(conn)
 }
 
-fn all_post_with_pagination(page: i32, limit: i32, cat: String, conn: &mut DBPooledConnection) -> Result<Vec<JoinedPost>, Error> {
+fn all_post_with_pagination(page: i32, limit: i32, cat: String, search: String, conn: &mut DBPooledConnection) -> Result<Vec<JoinedPost>, Error> {
     use crate::schema::posts::dsl::*;
     use crate::schema::post_categories::dsl::{post_categories, deleted_at as category_deleted_at, slug as category_slug};
     use crate::schema::users::dsl::{users, deleted_at as user_deleted_at};
@@ -118,6 +119,14 @@ fn all_post_with_pagination(page: i32, limit: i32, cat: String, conn: &mut DBPoo
 
     if !cat.is_empty() {
         query = query.filter(category_slug.eq(cat));
+    }
+
+    if !search.is_empty() {
+        query = query.filter(
+            title.ilike(format!("%{}%", search))
+                .or(subtitle.ilike(format!("%{}%", search)))
+                .or(content.ilike(format!("%{}%", search)))
+        );
     }
 
     let result: Vec<JoinedPost> = query
@@ -246,9 +255,10 @@ pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -
     let page = query.page.unwrap_or(1);
     let limit = query.limit.unwrap_or(20);
     let cat = query.cat.clone().unwrap_or("".to_string());
+    let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_post_with_pagination(page, limit, cat, &mut conn) {
+    match all_post_with_pagination(page, limit, cat, search, &mut conn) {
         Ok(posts) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(posts),

@@ -3,7 +3,7 @@ use chrono::{Utc, NaiveDate, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use uuid::Uuid;
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, Queryable};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, Queryable, PgTextExpressionMethods, BoolExpressionMethods};
 use bcrypt::{hash, DEFAULT_COST};
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR, USER_BIRTH_NOTFOUND};
@@ -61,7 +61,8 @@ pub struct JoinedUser {
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
     pub page: Option<i32>,
-    pub limit: Option<i32>
+    pub limit: Option<i32>,
+    pub search: Option<String>
 }
 
 // Class Wide Function
@@ -87,14 +88,23 @@ fn update_user(user: UserDB, user_id: Uuid, conn: &mut DBPooledConnection) -> Re
         .get_result(conn)
 }
 
-fn all_user_with_pagination(page: i32, limit: i32, conn: &mut DBPooledConnection) -> Result<Vec<UserDB>, Error> {
+fn all_user_with_pagination(page: i32, limit: i32, search: String, conn: &mut DBPooledConnection) -> Result<Vec<UserDB>, Error> {
     use crate::schema::users::dsl::*;
-    users
+    let mut query = users
         .filter(deleted_at.is_null())
         .order_by(id.desc())
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
-        .load::<UserDB>(conn)
+        .into_boxed();
+    
+    if !search.is_empty() {
+        query = query.filter(
+            name.ilike(format!("%{}%", search))
+                .or(email.ilike(format!("%{}%", search)))
+        );
+    }
+
+    query.load::<UserDB>(conn)
 }
 
 fn get_single_user(user_id: Uuid, conn: &mut DBPooledConnection) -> Result<JoinedUser, Error> {
@@ -223,9 +233,10 @@ pub async fn restore(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpRe
 pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let limit = query.limit.unwrap_or(20);
+    let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_user_with_pagination(page, limit, &mut conn) {
+    match all_user_with_pagination(page, limit, search, &mut conn) {
         Ok(users) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(users),

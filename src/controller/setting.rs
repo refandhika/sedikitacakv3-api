@@ -2,7 +2,7 @@ use actix_web::{post, get, delete, web, HttpResponse};
 use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, PgTextExpressionMethods, BoolExpressionMethods};
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
 use crate::{DBPool, DBPooledConnection};
@@ -35,7 +35,8 @@ impl SettingRequest {
 #[derive(Debug, Deserialize)]
 pub struct PaginationParams {
     pub page: Option<i32>,
-    pub limit: Option<i32>
+    pub limit: Option<i32>,
+    pub search: Option<String>
 }
 
 // Class Wide Function
@@ -66,14 +67,23 @@ fn update_setting(setting: SettingDB, setting_param: String, conn: &mut DBPooled
         .get_result(conn)
 }
 
-fn all_setting_with_pagination(page: i32, limit: i32, conn: &mut DBPooledConnection) -> Result<Vec<SettingDB>, Error> {
+fn all_setting_with_pagination(page: i32, limit: i32, search: String, conn: &mut DBPooledConnection) -> Result<Vec<SettingDB>, Error> {
     use crate::schema::settings::dsl::*;
-    settings
+    let mut query = settings
         .filter(deleted_at.is_null())
         .order_by(id.desc())
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
-        .load::<SettingDB>(conn)
+        .into_boxed();
+    
+    if !search.is_empty() {
+        query = query.filter(
+            value.ilike(format!("%{}%", search))
+                .or(note.ilike(format!("%{}%", search)))
+        );
+    }
+
+    query.load::<SettingDB>(conn)
 }
 
 // Routing
@@ -181,9 +191,10 @@ pub async fn restore(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpRe
 pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let limit = query.limit.unwrap_or(20);
+    let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_setting_with_pagination(page, limit, &mut conn) {
+    match all_setting_with_pagination(page, limit, search, &mut conn) {
         Ok(settings) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(settings),

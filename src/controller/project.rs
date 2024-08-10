@@ -2,7 +2,7 @@ use actix_web::{post, get, delete, web, HttpResponse};
 use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl, Queryable, Table};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, JoinOnDsl, Queryable, Table, PgTextExpressionMethods, BoolExpressionMethods};
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
 use crate::{DBPool, DBPooledConnection};
@@ -36,7 +36,8 @@ pub struct ProjectTechJoin {
 pub struct PaginationParams {
     pub page: Option<i32>,
     pub limit: Option<i32>,
-    pub rlv: Option<bool>
+    pub rlv: Option<bool>,
+    pub search: Option<String>
 }
 
 // Class Wide Function
@@ -172,18 +173,27 @@ fn update_project(project: ProjectRequest, project_id: i32, conn: &mut DBPooledC
     })
 }
 
-fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, conn: &mut DBPooledConnection) -> Result<Vec<ProjectTechJoin>, Error> {
+fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, search: String, conn: &mut DBPooledConnection) -> Result<Vec<ProjectTechJoin>, Error> {
     use crate::schema::projects::dsl::*;
     use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
     use crate::schema::techs::dsl::{techs, id as techs_id};
 
-    let projects_list = projects
+    let mut query = projects
         .filter(deleted_at.is_null())
         .filter(relevant.eq(rlv))
         .order_by(order.desc())
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
-        .load::<ProjectDB>(conn)?;
+        .into_boxed();
+
+    if !search.is_empty() {
+        query = query.filter(
+            title.ilike(format!("%{}%", search))
+                .or(content.ilike(format!("%{}%", search)))
+        );
+    }
+        
+    let projects_list = query.load::<ProjectDB>(conn)?;
 
     let mut result = Vec::new();
 
@@ -332,9 +342,10 @@ pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -
     let page = query.page.unwrap_or(1);
     let limit = query.limit.unwrap_or(20);
     let rlv = query.rlv.unwrap_or(true);
+    let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_project_with_pagination(page, limit, rlv, &mut conn) {
+    match all_project_with_pagination(page, limit, rlv, search, &mut conn) {
         Ok(projects) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(projects),
