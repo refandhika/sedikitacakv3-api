@@ -84,10 +84,13 @@ fn all_roles_with_pagination(page: i32, limit: i32, search: String, conn: &mut D
     let mut query = roles
         .filter(deleted_at.is_null())
         .order_by(id.desc())
-        .limit(limit as i64)
-        .offset(((page - 1) * limit) as i64)
         .into_boxed();
     
+    if limit != 0 {
+        query = query.limit(limit as i64)
+        .offset(((page - 1) * limit) as i64)
+    }
+
     if !search.is_empty() {
         query = query.filter(name.ilike(format!("%{}%", search)));
     }
@@ -199,7 +202,7 @@ pub async fn restore(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespo
 #[get("/roles")]
 pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
     let page = query.page.unwrap_or(1);
-    let limit = query.limit.unwrap_or(20);
+    let limit = query.limit.unwrap_or(0);
     let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
