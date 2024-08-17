@@ -2,7 +2,7 @@ use actix_web::{post, get, delete, web, HttpResponse};
 use chrono::{Utc, NaiveDateTime};
 use serde::{Serialize, Deserialize};
 use diesel::result::Error;
-use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, PgTextExpressionMethods, BoolExpressionMethods};
+use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods, PgTextExpressionMethods};
 
 use crate::constants::{APPLICATION_JSON, CONNECTION_POOL_ERROR};
 use crate::{DBPool, DBPooledConnection};

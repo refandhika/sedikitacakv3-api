@@ -88,9 +88,12 @@ fn update_user(user: UserDB, user_id: Uuid, conn: &mut DBPooledConnection) -> Re
         .get_result(conn)
 }
 
-fn all_user_with_pagination(page: i32, limit: i32, search: String, conn: &mut DBPooledConnection) -> Result<Vec<UserDB>, Error> {
+fn all_user_with_pagination(page: i32, limit: i32, search: String, conn: &mut DBPooledConnection) -> Result<Vec<JoinedUser>, Error> {
     use crate::schema::users::dsl::*;
+    use crate::schema::roles::dsl::{roles};
+
     let mut query = users
+        .inner_join(roles)
         .filter(deleted_at.is_null())
         .order_by(id.desc())
         .limit(limit as i64)
@@ -104,7 +107,7 @@ fn all_user_with_pagination(page: i32, limit: i32, search: String, conn: &mut DB
         );
     }
 
-    query.load::<UserDB>(conn)
+    query.load::<JoinedUser>(conn)
 }
 
 fn get_single_user(user_id: Uuid, conn: &mut DBPooledConnection) -> Result<JoinedUser, Error> {
