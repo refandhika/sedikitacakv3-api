@@ -11,4 +11,4 @@ CREATE TABLE roles (
     deleted_at TIMESTAMP
 );
 
-INSERT INTO roles (id, name, level, can_modify_user, can_edit, can_view, is_guest) VALUES (1, 'Administrator', 'administrator', true, true, true, false);
+INSERT INTO roles (name, level, can_modify_user, can_edit, can_view, is_guest) VALUES ('Administrator', 'administrator', true, true, true, false);
