@@ -11,21 +11,21 @@ use crate::models::PostCatDB;
 
 // Post Category Request Struct
 #[derive(Debug, Deserialize, Serialize)]
-pub struct PostCatRequesst {
+pub struct PostCatRequest {
     pub name: String,
     pub slug: String,
     pub description: Option<String>,
-    pub activated: bool
+    pub published: bool
 }
 
-impl PostCatRequesst {
+impl PostCatRequest {
     pub fn to_pcat_db(&self) -> Result<PostCatDB, String> {
         Ok(PostCatDB {
             id: 1,
             name: self.name.clone(),
             slug: self.slug.clone(),
             description: Some(self.description.clone().unwrap_or("".to_string())),
-            published: self.activated,
+            published: self.published,
             created_at: Utc::now().naive_utc(),
             updated_at: Utc::now().naive_utc(),
             deleted_at: None,
@@ -96,7 +96,7 @@ fn all_postcat_with_pagination(page: i32, limit: i32, search: String, conn: &mut
 // Routing
 
 #[post("/post-category")]
-pub async fn create(postcat_req: web::Json<PostCatRequesst>, pool: web::Data<DBPool>) -> HttpResponse {
+pub async fn create(postcat_req: web::Json<PostCatRequest>, pool: web::Data<DBPool>) -> HttpResponse {
     match postcat_req.to_pcat_db() {
         Ok(postcat_db) => {
             let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
@@ -116,7 +116,7 @@ pub async fn create(postcat_req: web::Json<PostCatRequesst>, pool: web::Data<DBP
 }
 
 #[post("/post-category/{id}")]
-pub async fn update(path: web::Path<i32>, postcat_req: web::Json<PostCatRequesst>, pool: web::Data<DBPool>) -> HttpResponse {
+pub async fn update(path: web::Path<i32>, postcat_req: web::Json<PostCatRequest>, pool: web::Data<DBPool>) -> HttpResponse {
     let pcat_id = path.into_inner();
     match postcat_req.to_pcat_db() {
         Ok(postcat_db) => {
