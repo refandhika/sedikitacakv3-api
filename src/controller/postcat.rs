@@ -71,7 +71,7 @@ fn update_pcat(post_category: PostCatDB, pcat_id: i32, conn: &mut DBPooledConnec
         .get_result(conn)
 }
 
-fn all_postcat_with_pagination(page: i32, limit: i32, search: String, conn: &mut DBPooledConnection) -> Result<Vec<PostCatDB>, Error> {
+fn all_postcat_with_pagination(page: i32, limit: i32, search: String, is_published: bool, conn: &mut DBPooledConnection) -> Result<Vec<PostCatDB>, Error> {
     use crate::schema::post_categories::dsl::*;
     let mut query = post_categories
         .filter(deleted_at.is_null())
@@ -90,11 +90,14 @@ fn all_postcat_with_pagination(page: i32, limit: i32, search: String, conn: &mut
         );
     }
 
+    if is_published {
+        query = query.filter(published.eq(is_published));
+    }
+
     query.load::<PostCatDB>(conn)
 }
 
 // Routing
-
 #[post("/post-category")]
 pub async fn create(postcat_req: web::Json<PostCatRequest>, pool: web::Data<DBPool>) -> HttpResponse {
     match postcat_req.to_pcat_db() {
@@ -201,7 +204,24 @@ pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -
     let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_postcat_with_pagination(page, limit, search, &mut conn) {
+    match all_postcat_with_pagination(page, limit, search, false, &mut conn) {
+        Ok(postcats) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(postcats),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve post categories"})),
+    }
+}
+
+#[get("/post-categories/active")]
+pub async fn active(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(0);
+    let search = query.search.clone().unwrap_or("".to_string());
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_postcat_with_pagination(page, limit, search, true, &mut conn) {
         Ok(postcats) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(postcats),

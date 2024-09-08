@@ -56,8 +56,11 @@ To Do:
 `/role/:id/restore`
 - POST: Restore a role by id (Authorized)
 
-`/posts`
+`/posts/active`
 - GET: Get all post
+
+`/posts`
+- GET: Get all post (Authorized)
 
 `/post`
 - POST: Save a new post (Authorized)
@@ -69,6 +72,9 @@ To Do:
 
 `/post/:slug/restore`
 - POST: Restore a post by slug (Authorized)
+
+`/post-categories/active`
+- GET: Get all post categories (Authorized)
 
 `/post-categories`
 - GET: Get all post categories (Authorized)

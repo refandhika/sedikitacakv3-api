@@ -101,7 +101,7 @@ fn update_post(post: PostDB, post_slug: String, conn: &mut DBPooledConnection) -
         .get_result(conn)
 }
 
-fn all_post_with_pagination(page: i32, limit: i32, cat: String, search: String, conn: &mut DBPooledConnection) -> Result<Vec<JoinedPost>, Error> {
+fn all_post_with_pagination(page: i32, limit: i32, cat: String, search: String, is_published: bool, conn: &mut DBPooledConnection) -> Result<Vec<JoinedPost>, Error> {
     use crate::schema::posts::dsl::*;
     use crate::schema::post_categories::dsl::{post_categories, deleted_at as category_deleted_at, slug as category_slug};
     use crate::schema::users::dsl::{users, deleted_at as user_deleted_at};
@@ -127,6 +127,10 @@ fn all_post_with_pagination(page: i32, limit: i32, cat: String, search: String, 
                 .or(subtitle.ilike(format!("%{}%", search)))
                 .or(content.ilike(format!("%{}%", search)))
         );
+    }
+
+    if is_published {
+        query = query.filter(published.eq(is_published));
     }
 
     let result: Vec<JoinedPost> = query
@@ -258,7 +262,25 @@ pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -
     let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_post_with_pagination(page, limit, cat, search, &mut conn) {
+    match all_post_with_pagination(page, limit, cat, search, false, &mut conn) {
+        Ok(posts) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(posts),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve posts"})),
+    }
+}
+
+#[get("/posts/active")]
+pub async fn active(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
+    let cat = query.cat.clone().unwrap_or("".to_string());
+    let search = query.search.clone().unwrap_or("".to_string());
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_post_with_pagination(page, limit, cat, search, true, &mut conn) {
         Ok(posts) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(posts),
