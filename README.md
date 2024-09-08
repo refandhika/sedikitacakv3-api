@@ -67,8 +67,11 @@ To Do:
 
 `/post/:slug`
 - GET: Get a post by slug
-- UPDATE: Update a post by slug  (Authorized)
-- DELETE: Soft delete a post by slug  (Authorized)
+
+`/post/:id`
+- GET: Get a post by id (Authorized)
+- UPDATE: Update a post by id  (Authorized)
+- DELETE: Soft delete a post by id  (Authorized)
 
 `/post/:slug/restore`
 - POST: Restore a post by slug (Authorized)
