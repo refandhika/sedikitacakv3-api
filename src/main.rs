@@ -62,7 +62,7 @@ async fn main() -> io::Result<()> {
                 .service(user::get)
                 //.service(user::create)
                 .service(post::active)
-                .service(post::getBySlug)
+                .service(post::get_by_slug)
                 .service(project::all)
                 .service(hobby::all)
                 .service(setting::get)

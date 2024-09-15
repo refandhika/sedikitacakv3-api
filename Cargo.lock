@@ -1743,6 +1743,7 @@ dependencies = [
  "futures-util",
  "jsonwebtoken",
  "lettre",
+ "log",
  "mime",
  "openssl",
  "r2d2",

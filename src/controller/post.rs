@@ -302,7 +302,7 @@ pub async fn active(query: web::Query<PaginationParams>, pool: web::Data<DBPool>
 }
 
 #[get("/post/{slug}")]
-pub async fn getBySlug(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpResponse {
+pub async fn get_by_slug(path: web::Path<String>, pool: web::Data<DBPool>) -> HttpResponse {
     let post_slug = path.into_inner();
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);

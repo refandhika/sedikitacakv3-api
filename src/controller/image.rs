@@ -4,6 +4,7 @@ use futures_util::stream::StreamExt as _;
 use actix_multipart::Multipart;
 use serde::{Deserialize, Serialize};
 use sanitize_filename::sanitize;
+use log::error;
 
 use std::fs;
 use std::path::PathBuf;
@@ -15,6 +16,7 @@ use crate::constants::APPLICATION_JSON;
 #[derive(Debug, Deserialize, Serialize)]
 struct ImageRequest {
     filename: String,
+    fileloc: String
 }
 
 async fn save_image(mut payload: Multipart) -> Result<ImageRequest, Error> {
@@ -65,7 +67,8 @@ async fn save_image(mut payload: Multipart) -> Result<ImageRequest, Error> {
     let saved_file_string = saved_file.to_string_lossy();
 
     Ok(ImageRequest {
-        filename: format!("{}{}", "/assets/", saved_file_string.to_string())
+        filename: saved_file_string.to_string(),
+        fileloc: "/assets/".to_string()
     })
 }
 
@@ -74,7 +77,12 @@ fn get_all_image() -> Result<Vec<ImageRequest>, Error> {
     let images: Vec<ImageRequest> = paths
         .filter_map(|entry| {
             entry.ok().and_then(|e| {
-                e.path().file_name().and_then(|n| n.to_str().map(|s| ImageRequest { filename: s.to_string() }))
+                e.path()
+                    .file_name()
+                    .and_then(|n| n.to_str().map(|s| ImageRequest { 
+                        filename: s.to_string(),
+                        fileloc: "/assets".to_string()
+                    }))
             })
         })
         .collect();
@@ -90,7 +98,8 @@ fn get_single_image(filename: String) -> Result<ImageRequest, Error> {
             if let Some(file_name) = e.path().file_name() {
                 if let Some(file_name_str) = file_name.to_str() {
                     if file_name_str == filename {
-                        found_file = format!("{}{}", "/assets/", file_name_str.to_string());
+                        found_file = file_name_str.to_string();
+                        //found_file = format!("{}{}", "/assets/", file_name_str.to_string());
                     }
                 }
             }
@@ -98,21 +107,27 @@ fn get_single_image(filename: String) -> Result<ImageRequest, Error> {
     }
 
     Ok(ImageRequest {
-        filename: found_file.to_string(),
+        filename: found_file,
+        fileloc: "/assets".to_string()
     })
 }
 
 // Routing
-
 #[post("/image")]
 pub async fn upload(payload: Multipart) -> HttpResponse {
     match save_image(payload).await {
         Ok(_) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(serde_json::json!({"message": "Image upload success!"})),
-        Err(_) => HttpResponse::InternalServerError()
-            .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Image upload failed!"})),
+        Err(e) => {
+            error!("Image upload failed: {:?}", e);
+            HttpResponse::InternalServerError()
+                .content_type(APPLICATION_JSON)
+                .json(serde_json::json!({
+                    "message": "Image not found!",
+                    "error": format!("{:?}", e)
+                }))
+        }
     }
 }
 
@@ -124,9 +139,15 @@ pub async fn get(img_req: web::Json<ImageRequest>) -> HttpResponse {
         Ok(image) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(image),
-        Err(_) => HttpResponse::InternalServerError()
-            .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Image not found!"}))
+        Err(e) => {
+            error!("Image get failed: {:?}", e);
+            HttpResponse::InternalServerError()
+                .content_type(APPLICATION_JSON)
+                .json(serde_json::json!({
+                    "message": "Image not found!",
+                    "error": format!("{:?}", e)
+                }))
+        }
     }
 }
 
@@ -151,16 +172,22 @@ pub async fn all() -> HttpResponse {
         Ok(images) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(images),
-        Err(_) => HttpResponse::InternalServerError()
-            .content_type(APPLICATION_JSON)
-            .json(serde_json::json!({"message": "Failed to get all images"}))
+        Err(e) => {
+            error!("Image get all failed: {:?}", e);
+            HttpResponse::InternalServerError()
+                .content_type(APPLICATION_JSON)
+                .json(serde_json::json!({
+                    "message": "Failed to get all images!",
+                    "error": format!("{:?}", e)
+                }))
+        }
     }
 }
 
 #[get("/assets/{filename:.*}")]
 pub async fn serve(request: HttpRequest) -> Result<NamedFile, Error> {
     let filename: String = request.match_info().query("filename").parse().unwrap();
-    println!("{}", filename);
+    //println!("{}", filename);
     let filepath: PathBuf = PathBuf::from(format!("./uploads/{}", filename));
 
     Ok(NamedFile::open(filepath)?)
