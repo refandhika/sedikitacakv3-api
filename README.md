@@ -93,8 +93,11 @@ To Do:
 `/post-category/:id/restore`
 - POST: Restore a post category by ID (Authorized)
 
-`/projects`
+`/projects/all`
 - GET: Get all project lists
+
+`/projects`
+- GET: Get all project lists (Authorized)
 
 `/project`
 - POST: Save new project (Authorized)

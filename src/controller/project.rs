@@ -88,7 +88,6 @@ fn create_project(project: ProjectRequest, conn: &mut DBPooledConnection) -> Res
             ))
             .execute(conn);
     }
-
     
     let project = projects
         .find(inserted_project.id)
@@ -109,7 +108,6 @@ fn create_project(project: ProjectRequest, conn: &mut DBPooledConnection) -> Res
 }
 
 fn update_project(project: ProjectRequest, project_id: i32, conn: &mut DBPooledConnection) -> Result<ProjectTechJoin, Error> {
-    
     use crate::schema::projects::dsl::*;
     use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
     use crate::schema::techs::dsl::{techs, id as techs_id};
@@ -173,14 +171,13 @@ fn update_project(project: ProjectRequest, project_id: i32, conn: &mut DBPooledC
     })
 }
 
-fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, search: String, conn: &mut DBPooledConnection) -> Result<Vec<ProjectTechJoin>, Error> {
+fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, search: String, activated: bool, conn: &mut DBPooledConnection) -> Result<Vec<ProjectTechJoin>, Error> {
     use crate::schema::projects::dsl::*;
     use crate::schema::projects_techs::dsl::{projects_techs, project_id as pt_project_id, tech_id as pt_tech_id};
     use crate::schema::techs::dsl::{techs, id as techs_id};
 
     let mut query = projects
         .filter(deleted_at.is_null())
-        .filter(relevant.eq(rlv))
         .order_by(order.desc())
         .limit(limit as i64)
         .offset(((page - 1) * limit) as i64)
@@ -191,6 +188,14 @@ fn all_project_with_pagination(page: i32, limit: i32, rlv: bool, search: String,
             title.ilike(format!("%{}%", search))
                 .or(content.ilike(format!("%{}%", search)))
         );
+    }
+
+    if rlv {
+        query = query.filter(relevant.eq(rlv));
+    }
+
+    if activated {
+        query = query.filter(published.eq(activated));
     }
         
     let projects_list = query.load::<ProjectDB>(conn)?;
@@ -341,11 +346,28 @@ pub async fn restore(path: web::Path<i32>, pool: web::Data<DBPool>) -> HttpRespo
 pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
     let page = query.page.unwrap_or(1);
     let limit = query.limit.unwrap_or(20);
+    let search = query.search.clone().unwrap_or("".to_string());
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_project_with_pagination(page, limit, false, search, false, &mut conn) {
+        Ok(projects) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(projects),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve projects"})),
+    }
+}
+
+#[get("/projects/active")]
+pub async fn active(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
     let rlv = query.rlv.unwrap_or(true);
     let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_project_with_pagination(page, limit, rlv, search, &mut conn) {
+    match all_project_with_pagination(page, limit, rlv, search, true, &mut conn) {
         Ok(projects) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(projects),
