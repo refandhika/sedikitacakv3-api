@@ -124,8 +124,11 @@ To Do:
 `/tech/:id/restore`
 - POST: Restore a tech by ID (Authorized)
 
-`/hobbies`
+`/hobbies/active`
 - GET: Get all hobbies lists
+
+`/hobbies`
+- GET: Get all hobbies lists (Authorized)
 
 `/hobby`
 - POST: Save new hobby (Authorized)

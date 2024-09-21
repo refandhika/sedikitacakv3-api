@@ -84,7 +84,7 @@ fn update_hobby(hobby: HobbyDB, hobby_id: i32, conn: &mut DBPooledConnection) ->
         .get_result(conn)
 }
 
-fn all_hobby_with_pagination(page: i32, limit: i32, search: String, conn: &mut DBPooledConnection) -> Result<Vec<HobbyDB>, Error> {
+fn all_hobby_with_pagination(page: i32, limit: i32, search: String, is_published:bool, conn: &mut DBPooledConnection) -> Result<Vec<HobbyDB>, Error> {
     use crate::schema::hobbies::dsl::*;
     let mut query = hobbies
         .filter(deleted_at.is_null())
@@ -98,6 +98,10 @@ fn all_hobby_with_pagination(page: i32, limit: i32, search: String, conn: &mut D
             title.ilike(format!("%{}%", search))
                 .or(content.ilike(format!("%{}%", search)))
         );
+    }
+
+    if is_published {
+        query = query.filter(published.eq(is_published));
     }
 
     query.load::<HobbyDB>(conn)
@@ -222,7 +226,24 @@ pub async fn all(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -
     let search = query.search.clone().unwrap_or("".to_string());
 
     let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
-    match all_hobby_with_pagination(page, limit, search, &mut conn) {
+    match all_hobby_with_pagination(page, limit, search, false, &mut conn) {
+        Ok(hobbies) => HttpResponse::Ok()
+            .content_type(APPLICATION_JSON)
+            .json(hobbies),
+        Err(_) => HttpResponse::InternalServerError()
+            .content_type(APPLICATION_JSON)
+            .json(serde_json::json!({"message": "Failed to retrieve hobbies"})),
+    }
+}
+
+#[get("/hobbies/active")]
+pub async fn active(query: web::Query<PaginationParams>, pool: web::Data<DBPool>) -> HttpResponse {
+    let page = query.page.unwrap_or(1);
+    let limit = query.limit.unwrap_or(20);
+    let search = query.search.clone().unwrap_or("".to_string());
+
+    let mut conn = pool.get().expect(CONNECTION_POOL_ERROR);
+    match all_hobby_with_pagination(page, limit, search, true, &mut conn) {
         Ok(hobbies) => HttpResponse::Ok()
             .content_type(APPLICATION_JSON)
             .json(hobbies),
