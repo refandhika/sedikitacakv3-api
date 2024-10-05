@@ -50,8 +50,8 @@ fn create_contact(contact: ContactDB, conn: &mut DBPooledConnection) -> Result<C
         .body(String::from(contact.content.clone()))
         .unwrap();
 
-    let user = env::var("SMTP.USER").expect("SMTP.USER");
-    let pass = env::var("SMTP.PASS").expect("SMTP.PASS");
+    let user = env::var("SMTP_USER").expect("SMTP_USER");
+    let pass = env::var("SMTP_PASS").expect("SMTP_PASS");
     let creds = Credentials::new(user.to_owned(), pass.to_owned());
 
     let mailer = SmtpTransport::relay("smtp.gmail.com")
