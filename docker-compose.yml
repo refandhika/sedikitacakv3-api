@@ -27,7 +27,7 @@ services:
       db:
         condition: service_healthy
     volumes:
-      - ./uploads:/app/uploads
+      - ./uploads:/home/refandhika/local/bin/uploads
     ports:
       - "8080:8080"
     networks:
