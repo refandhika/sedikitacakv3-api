@@ -47,8 +47,8 @@ async fn main() -> io::Result<()> {
     }
 
     let governor_conf = GovernorConfigBuilder::default()
-        .requests_per_second(2)
-        .burst_size(5)
+        .requests_per_second(10)
+        .burst_size(50)
         .finish()
         .unwrap();
 

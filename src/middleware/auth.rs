@@ -46,7 +46,7 @@ where
             if let Ok(auth_str) = auth_header.to_str() {
                 if auth_str.starts_with("Bearer ") {
                     let token = auth_str.trim_start_matches("Bearer ");
-                    if let Ok(_claims) = decode::<Claims>(token, &DecodingKey::from_secret("secret".as_ref()), &Validation::default()) {
+                    if let Ok(_claims) = decode::<Claims>(token, &DecodingKey::from_secret("sufferCr4ust!".as_ref()), &Validation::default()) {
                         return Either::Left(self.service.call(req));
                     }
                 }
