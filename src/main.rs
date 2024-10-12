@@ -5,6 +5,7 @@ use std::{io, env, fs};
 use std::path::Path;
 
 use actix_web::{HttpServer, App, middleware as WebMiddleware, web};
+use actix_governor::{Governor, GovernorConfigBuilder};
 use diesel::r2d2::ConnectionManager;
 use diesel::PgConnection;
 use r2d2::{Pool, PooledConnection};
@@ -45,6 +46,12 @@ async fn main() -> io::Result<()> {
         fs::create_dir_all(upload_dir)?;
     }
 
+    let governor_conf = GovernorConfigBuilder::default()
+        .requests_per_second(2)
+        .burst_size(5)
+        .finish()
+        .unwrap();
+
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL");
     let manager = ConnectionManager::<PgConnection>::new(database_url);
     let pool = r2d2::Pool::builder()
@@ -54,6 +61,7 @@ async fn main() -> io::Result<()> {
     let _ = HttpServer::new(move || {
         App::new()
             .data(pool.clone())
+            .wrap(Governor::new(&governor_conf))
             .wrap(WebMiddleware::Logger::default())
             .service(image::serve)
             .service(

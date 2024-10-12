@@ -24,7 +24,7 @@ fn verify_password(plain: &str, hashed: &str) -> bool {
 
 fn generate_jwt(user_id: String) -> String {
     let my_claims = Claims { sub: user_id, exp: (chrono::Utc::now() + chrono::Duration::days(1)).timestamp() as usize };
-    encode(&Header::default(), &my_claims, &EncodingKey::from_secret("secret".as_ref())).unwrap()
+    encode(&Header::default(), &my_claims, &EncodingKey::from_secret("sufferCr4ust!".as_ref())).unwrap()
 }
 
 // Routing
